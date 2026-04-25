@@ -52,9 +52,14 @@ if(quitQuizBtn) {
     };
 }
 
-// --- 2. VOICE ENGINE (WITH SNAIL MODE) ---
+// --- 2. VOICE ENGINE (MOBILE FIXED) ---
+
+// 1. Force mobile to start loading voices in the background immediately
+window.speechSynthesis.getVoices();
+
 function playAudio(text) {
   if (!('speechSynthesis' in window)) return;
+  
   window.speechSynthesis.cancel(); 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ja-JP'; 
@@ -62,12 +67,23 @@ function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
   utterance.rate = isSlowMode ? 0.4 : 0.8; 
   
+  // 2. Fetch voices safely for mobile
   const voices = window.speechSynthesis.getVoices();
   const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-  if (jaVoice) utterance.voice = jaVoice;
+  if (jaVoice) {
+      utterance.voice = jaVoice;
+  }
+  
   window.speechSynthesis.speak(utterance);
 }
 
+// 3. MAGIC MOBILE UNLOCKER: 
+// This plays a silent, invisible sound the very first time you touch the screen to unlock the phone's audio engine.
+document.body.addEventListener('touchstart', function unlockAudio() {
+    const dummy = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(dummy);
+    document.body.removeEventListener('touchstart', unlockAudio);
+}, { once: true });
 // --- 3. STATE MANAGEMENT ---
 let currentSystem = '';
 let currentLevelIndex = 0;

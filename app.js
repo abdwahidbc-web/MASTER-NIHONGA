@@ -52,13 +52,26 @@ if(quitQuizBtn) {
     };
 }
 
-// --- 2. VOICE ENGINE (MOBILE FIXED) ---
+// --- 2. MOBILE VOICE ENGINE FIX (SAFE VERSION) ---
 
-// 1. Force mobile to start loading voices in the background immediately
-window.speechSynthesis.getVoices();
+// Safety check: Only try to wake up the audio if the phone supports it
+if ('speechSynthesis' in window && window.speechSynthesis) {
+    window.speechSynthesis.getVoices(); // Wake up voices on load
+
+    // Magic unlocker for mobile
+    document.body.addEventListener('touchstart', function unlockAudio() {
+        const dummy = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(dummy);
+        document.body.removeEventListener('touchstart', unlockAudio);
+    }, { once: true });
+}
 
 function playAudio(text) {
-  if (!('speechSynthesis' in window)) return;
+  // Second safety check: If the phone doesn't have a voice engine, just silently ignore the play button instead of crashing
+  if (!('speechSynthesis' in window) || !window.speechSynthesis) {
+      console.warn("Audio not supported on this device's WebView.");
+      return; 
+  }
   
   window.speechSynthesis.cancel(); 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -67,16 +80,11 @@ function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
   utterance.rate = isSlowMode ? 0.4 : 0.8; 
   
-  // 2. Fetch voices safely for mobile
   const voices = window.speechSynthesis.getVoices();
   const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-  if (jaVoice) {
-      utterance.voice = jaVoice;
-  }
-  
+  if (jaVoice) utterance.voice = jaVoice;
   window.speechSynthesis.speak(utterance);
 }
-
 // 3. MAGIC MOBILE UNLOCKER: 
 // This plays a silent, invisible sound the very first time you touch the screen to unlock the phone's audio engine.
 document.body.addEventListener('touchstart', function unlockAudio() {

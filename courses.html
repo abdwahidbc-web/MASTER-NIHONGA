@@ -8,20 +8,50 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   
   <style>
-    * { box-sizing: border-box; }
-    body { overflow-x: hidden; }
-    img, canvas, div, section { max-width: 100%; }
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden; /* Stops left/right scrolling */
+      margin: 0;
+      padding: 0;
+    }
+    * {
+      box-sizing: border-box;
+      max-width: 100%;
+    }
+    .path-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      padding: 10px;
+    }
+    .path-card {
+      width: 100%; /* Makes cards stack on mobile */
+      max-width: 300px;
+    }
+    .practice-panels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .quiz-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
 
   <nav class="navbar" id="main-nav">
-    <div class="logo">日本語 Master <span id="user-display-name" class="user-badge"></span></div>
+    <div class="logo">日本語 Master <span id="user-display-name" class="user-badge" style="font-size: 0.8rem;"></span></div>
     
-    <div class="nav-links" style="display: flex; align-items: center; gap: 15px;">
+    <div class="nav-links" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <label style="color: #aaa; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
         <input type="checkbox" id="slow-audio-toggle" style="cursor: pointer;">
-        🐢 Slow
+        🐢
       </label>
       <button id="nav-home-btn" class="nav-btn hidden">Back</button>
       <button id="nav-levels-btn" class="nav-btn hidden">Levels</button>
@@ -29,8 +59,8 @@
     </div>
   </nav>
 
-  <main id="view-home" class="view active">
-    <h1 class="view-title">Select Your Course</h1>
+  <main id="view-home" class="view active" style="padding: 15px;">
+    <h1 class="view-title" style="font-size: 1.8rem; margin-top: 20px;">Select Your Course</h1>
     <div class="path-container">
       <div class="path-card hiragana-path" id="card-hiragana">
         <div class="path-icon">あ</div>
@@ -49,45 +79,44 @@
       </div>
     </div>
     
-    <div style="text-align: center; margin-top: 60px; margin-bottom: 20px;">
+    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
       <h2 style="color: #aaa; margin-bottom: 20px; font-size: 1.2rem;">Practice Modes</h2>
-      <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-        <button id="start-char-quiz-btn" class="primary-btn" style="background: #ff3366; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">🔤 Character</button>
-        <button id="start-vocab-quiz-btn" class="primary-btn" style="background: #00d2ff; color: #000; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">📖 Vocabulary</button>
-        <button id="start-reading-btn" class="primary-btn" style="background: #28a745; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">📚 Read</button>
-        <button id="start-sentences-btn" class="primary-btn" style="background: #9c27b0; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">💬 Sentences</button>
-        <button id="start-review-btn" class="primary-btn" style="background: #ff9800; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">🧠 Review</button>
-        <button id="start-typing-btn" class="primary-btn" style="background: #3f51b5; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">⌨️ Typing</button>
-        <button id="start-library-btn" class="primary-btn" style="background: #607d8b; color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 25px; border-radius: 50px; cursor: pointer; border: none;">🔍 Library</button>
+      <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+        <button id="start-char-quiz-btn" class="primary-btn" style="background: #ff3366; color: white; padding: 12px 20px; border-radius: 50px; border: none;">🔤 Character</button>
+        <button id="start-vocab-quiz-btn" class="primary-btn" style="background: #00d2ff; color: #000; padding: 12px 20px; border-radius: 50px; border: none;">📖 Vocabulary</button>
+        <button id="start-reading-btn" class="primary-btn" style="background: #28a745; color: white; padding: 12px 20px; border-radius: 50px; border: none;">📚 Read</button>
+        <button id="start-sentences-btn" class="primary-btn" style="background: #9c27b0; color: white; padding: 12px 20px; border-radius: 50px; border: none;">💬 Sentences</button>
+        <button id="start-library-btn" class="primary-btn" style="background: #607d8b; color: white; padding: 12px 20px; border-radius: 50px; border: none;">🔍 Library</button>
+        <button id="start-typing-btn" class="primary-btn" style="background: #3f51b5; color: white; padding: 12px 20px; border-radius: 50px; border: none;">⌨️ Typing</button>
       </div>
     </div>
   </main>
 
-  <main id="view-library" class="view">
-    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 30px; border-radius: 20px; border: 1px solid #333;">
+  <main id="view-library" class="view" style="padding: 15px;">
+    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 20px; border-radius: 20px; border: 1px solid #333;">
       <h2 style="color: #607d8b; margin-bottom: 20px; text-align: center;">Dictionary Library</h2>
-      <input type="text" id="library-search" placeholder="Search Romaji/English..." style="width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; background: #1a1a24; color: white; font-size: 1rem;">
+      <input type="text" id="library-search" placeholder="Search..." style="width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; background: #1a1a24; color: white;">
       <div id="library-results" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;"></div>
       <button id="quit-library-btn" class="secondary-btn" style="margin-top: 20px; width: 100%; border: none; color: #ff3366;">Exit</button>
     </div>
   </main>
 
-  <main id="view-typing" class="view">
-    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 30px; border-radius: 20px; border: 1px solid #333; text-align: center;">
+  <main id="view-typing" class="view" style="padding: 15px;">
+    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center;">
       <h2 style="color: #3f51b5; margin-bottom: 10px;">Romaji Typing</h2>
-      <div id="typing-jp" style="font-size: 3.5rem; color: #fff; font-weight: bold; margin-bottom: 10px;"></div>
+      <div id="typing-jp" style="font-size: 3rem; color: #fff; font-weight: bold; margin-bottom: 10px;"></div>
       <div id="typing-en" style="font-size: 1.2rem; color: #aaa; margin-bottom: 30px;"></div>
-      <div id="typing-input-display" style="font-size: 2rem; color: #00d2ff; letter-spacing: 5px; height: 50px; border-bottom: 3px solid #444; margin-bottom: 30px;"></div>
+      <div id="typing-input-display" style="font-size: 2rem; color: #00d2ff; letter-spacing: 3px; height: 50px; border-bottom: 3px solid #444; margin-bottom: 30px;"></div>
       <button id="quit-typing-btn" class="secondary-btn" style="border: none; color: #ff3366;">Exit Studio</button>
     </div>
   </main>
 
-  <main id="view-reading" class="view">
-    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 30px; border-radius: 20px; border: 1px solid #333; text-align: center;">
-      <h2 style="color: #28a745; margin-bottom: 30px;">Reading Practice</h2>
-      <div id="reading-jp" style="font-size: 1.5rem; line-height: 1.8; margin-bottom: 20px; color: #fff; font-weight: bold;"></div>
-      <div id="reading-en" class="hidden" style="font-size: 1.1rem; color: #aaa; font-style: italic; margin-bottom: 30px; padding: 15px; background: #1a1a24; border-left: 4px solid #00d2ff;"></div>
-      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+  <main id="view-reading" class="view" style="padding: 15px;">
+    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center;">
+      <h2 style="color: #28a745; margin-bottom: 20px;">Reading Practice</h2>
+      <div id="reading-jp" style="font-size: 1.2rem; line-height: 1.8; margin-bottom: 20px; color: #fff; font-weight: bold;"></div>
+      <div id="reading-en" class="hidden" style="font-size: 1rem; color: #aaa; font-style: italic; margin-bottom: 20px; padding: 15px; background: #1a1a24; border-left: 4px solid #00d2ff;"></div>
+      <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
         <button id="read-audio-btn" class="secondary-btn">🔊 Listen</button>
         <button id="toggle-translation-btn" class="secondary-btn">👁️ Translate</button>
         <button id="next-paragraph-btn" class="primary-btn" style="background: #28a745; color: white;">Next ➔</button>
@@ -96,65 +125,59 @@
     </div>
   </main>
 
-  <main id="view-sentences" class="view">
-    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 30px; border-radius: 20px; border: 1px solid #333;">
+  <main id="view-sentences" class="view" style="padding: 15px;">
+    <div style="max-width: 800px; margin: 0 auto; background: #2a2a35; padding: 20px; border-radius: 20px; border: 1px solid #333;">
       <h2 style="color: #9c27b0; margin-bottom: 20px; text-align: center;">Unlocked Sentences</h2>
       <div id="sentence-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 500px; overflow-y: auto;"></div>
       <button id="quit-sentences-btn" class="secondary-btn" style="margin-top: 20px; width: 100%; border: none; color: #ff3366;">Exit</button>
     </div>
   </main>
 
-  <main id="view-quiz" class="view">
-    <div class="quiz-container">
-      <h2 id="quiz-progress">Question 1 / 10</h2>
-      <div id="quiz-word" class="quiz-target" style="font-size: 3rem;">あお</div>
-      <div id="quiz-options" class="quiz-grid"></div>
-      <button id="quit-quiz-btn" class="secondary-btn" style="margin-top: 30px;">Quit Quiz</button>
+  <main id="view-quiz" class="view" style="padding: 15px;">
+    <div class="quiz-container" style="padding: 20px;">
+      <h2 id="quiz-progress" style="font-size: 1.2rem;">Question 1 / 10</h2>
+      <div id="quiz-word" class="quiz-target" style="font-size: 2.5rem; margin: 20px 0;">あお</div>
+      <div id="quiz-options" class="quiz-options"></div>
+      <button id="quit-quiz-btn" class="secondary-btn" style="margin-top: 30px; width: 100%;">Quit Quiz</button>
     </div>
   </main>
 
-  <main id="view-levels" class="view">
-    <h1 class="view-title" id="system-title">Select Level</h1>
+  <main id="view-levels" class="view" style="padding: 15px;">
+    <h1 class="view-title" id="system-title" style="font-size: 1.8rem;">Select Level</h1>
     <div class="level-list" id="level-list-container"></div>
   </main>
 
-  <main id="view-study" class="view">
+  <main id="view-study" class="view" style="padding: 15px;">
     <div class="study-layout">
       <section class="character-section">
-        <h2 id="study-level-title">Level Name</h2>
-        <div class="practice-panels" style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+        <h2 id="study-level-title" style="font-size: 1.5rem;">Level Name</h2>
+        <div class="practice-panels">
           <div class="panel">
             <span class="panel-label">Reference</span>
             <div class="char-reference" id="active-char">あ</div>
           </div>
           <div class="panel writing-panel">
             <span class="panel-label">Practice</span>
-            <canvas id="writing-canvas" width="250" height="250"></canvas>
+            <canvas id="writing-canvas" width="250" height="250" style="max-width: 100%;"></canvas>
           </div>
         </div>
         <div class="board-controls" style="margin-top: 20px; text-align: center;">
           <button id="next-char-btn" class="primary-btn" style="width: 100%; margin-bottom: 10px;">Next Character ➔</button>
-          <div class="sub-controls" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
-            <button id="play-audio-btn" class="secondary-btn">🔊</button>
+          <div class="sub-controls" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+            <button id="play-audio-btn" class="secondary-btn">🔊 Listen</button>
             <button id="show-guide-btn" class="secondary-btn">Guide</button>
             <button id="clear-canvas-btn" class="secondary-btn">Clear</button>
           </div>
           <button id="pass-level-btn" class="success-btn" style="width: 100%;">Pass Level Exam</button>
         </div>
       </section>
-      <section class="vocab-section">
+      <section class="vocab-section" style="margin-top: 30px;">
         <h2>Unlocked Vocab</h2>
         <div id="vocab-grid" class="vocab-grid"></div>
       </section>
     </div>
   </main>
-<script>
-    window.onerror = function(message, source, lineno, colno, error) {
-      alert("🚨 MOBILE CRASH DETECTED 🚨\n\nError: " + message + "\n\nLine Number: " + lineno);
-      return true; 
-    };
-  </script>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=999"></script>
 </body>
 </html>

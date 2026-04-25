@@ -1,20 +1,22 @@
 // ==========================================
-// NIHONGO MASTER | MOBILE STABLE V2
+// NIHONGO MASTER | MASTER ENGINE
 // ==========================================
 
+// --- 1. GLOBAL NAVIGATION & LOGOUT ---
 const viewHome = document.getElementById('view-home');
 const viewLevels = document.getElementById('view-levels');
 const viewStudy = document.getElementById('view-study');
 const viewQuiz = document.getElementById('view-quiz');
 const viewReading = document.getElementById('view-reading'); 
 const viewSentences = document.getElementById('view-sentences');
-const viewLibrary = document.getElementById('view-library'); 
-const viewTyping = document.getElementById('view-typing');   
 
 const navHomeBtn = document.getElementById('nav-home-btn');
 const navLevelsBtn = document.getElementById('nav-levels-btn');
+const viewLibrary = document.getElementById('view-library'); // NEW
+const viewTyping = document.getElementById('view-typing');   // NEW
 
 function hideAllViews() {
+  // Make sure you add viewLibrary and viewTyping to this list!
   [viewHome, viewLevels, viewStudy, viewQuiz, viewReading, viewSentences, viewLibrary, viewTyping].forEach(v => {
     if(v) v.classList.remove('active');
   });
@@ -28,27 +30,36 @@ window.logout = function() {
 if(navHomeBtn) {
     navHomeBtn.onclick = () => {
         hideAllViews();
-        if(viewHome) viewHome.classList.add('active');
+        viewHome.classList.add('active');
         navHomeBtn.classList.add('hidden');
-        if(navLevelsBtn) navLevelsBtn.classList.add('hidden');
+        navLevelsBtn.classList.add('hidden');
         renderCourseCards();
     };
 }
 
-if(navLevelsBtn) navLevelsBtn.onclick = () => openSystem(currentSystem);
+if(navLevelsBtn) {
+    navLevelsBtn.onclick = () => {
+        openSystem(currentSystem);
+    };
+}
 
-// --- 2. MOBILE VOICE ENGINE FIX ---
-window.speechSynthesis.getVoices(); // Wake up voices on load
+const quitQuizBtn = document.getElementById('quit-quiz-btn');
+if(quitQuizBtn) {
+    quitQuizBtn.onclick = () => {
+        hideAllViews();
+        viewHome.classList.add('active');
+        navHomeBtn.classList.add('hidden');
+    };
+}
 
-// Magic unlocker for mobile
-document.body.addEventListener('touchstart', function unlockAudio() {
-    const dummy = new SpeechSynthesisUtterance('');
-    window.speechSynthesis.speak(dummy);
-    document.body.removeEventListener('touchstart', unlockAudio);
-}, { once: true });
+// --- 2. VOICE ENGINE (MOBILE FIXED) ---
+
+// 1. Force mobile to start loading voices in the background immediately
+window.speechSynthesis.getVoices();
 
 function playAudio(text) {
   if (!('speechSynthesis' in window)) return;
+  
   window.speechSynthesis.cancel(); 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ja-JP'; 
@@ -56,15 +67,32 @@ function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
   utterance.rate = isSlowMode ? 0.4 : 0.8; 
   
+  // 2. Fetch voices safely for mobile
   const voices = window.speechSynthesis.getVoices();
   const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-  if (jaVoice) utterance.voice = jaVoice;
+  if (jaVoice) {
+      utterance.voice = jaVoice;
+  }
+  
   window.speechSynthesis.speak(utterance);
 }
 
+// 3. MAGIC MOBILE UNLOCKER: 
+// This plays a silent, invisible sound the very first time you touch the screen to unlock the phone's audio engine.
+document.body.addEventListener('touchstart', function unlockAudio() {
+    const dummy = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(dummy);
+    document.body.removeEventListener('touchstart', unlockAudio);
+}, { once: true });
 // --- 3. STATE MANAGEMENT ---
-let currentSystem = ''; let currentLevelIndex = 0; let currentCharIndex = 0;
-let quizPool = []; let currentQuestion = 0; let score = 0; let correctAnswer = null; let currentQuizMode = 'char';
+let currentSystem = '';
+let currentLevelIndex = 0;
+let currentCharIndex = 0;
+let quizPool = [];
+let currentQuestion = 0;
+let score = 0;
+let correctAnswer = null;
+let currentQuizMode = 'char';
 
 const activeCharUI = document.getElementById('active-char');
 const vocabGrid = document.getElementById('vocab-grid');
@@ -72,7 +100,6 @@ const canvas = document.getElementById('writing-canvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 let isDrawing = false;
 
-// --- 4. MASSIVE DICTIONARY DATA ---
 // --- 4. CHARACTER DATA ---
 const db = {
   hiragana: [
@@ -327,22 +354,37 @@ const sentenceDb = [
     { sys: 'kanji', level: 15, jp: "電車に乗ります。", en: "I ride the train." },
     { sys: 'kanji', level: 15, jp: "お金がありません。", en: "I have no money." }
 ];
-// --- 5. LOGIC & INITIALIZATION ---
+
+
+
+// --- 6. LOGIC ---
 window.onload = () => {
   const student = localStorage.getItem('nihongoStudent');
-  if (!student) { window.location.href = 'index.html'; } 
-  else { renderCourseCards(); }
+  if (!student) {
+    window.location.href = 'index.html'; 
+  } else {
+    renderCourseCards();
+  }
 };
 
 function getAndUpdateStreak(student) {
     const today = new Date().toDateString(); 
     let lastLogin = localStorage.getItem(`${student}_last_login`);
     let streak = parseInt(localStorage.getItem(`${student}_streak`)) || 0;
+
     if (lastLogin !== today) {
         if (lastLogin) {
-            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-            if (lastLogin === yesterday.toDateString()) streak += 1; else streak = 1; 
-        } else { streak = 1; }
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastLogin === yesterday.toDateString()) {
+                streak += 1; 
+            } else {
+                streak = 1; 
+            }
+        } else {
+            streak = 1; 
+        }
         localStorage.setItem(`${student}_last_login`, today);
         localStorage.setItem(`${student}_streak`, streak);
     }
@@ -356,36 +398,51 @@ function renderCourseCards() {
   const isPro = localStorage.getItem(`${student}_isPro`) === 'true';
 
   const currentStreak = getAndUpdateStreak(student);
-  const streakBadge = `<span style="color: #ff5722; font-weight: bold; margin-left: 10px;">🔥 ${currentStreak}</span>`;
+  const streakBadge = `<span style="color: #ff5722; font-weight: bold; margin-left: 10px; text-shadow: 0 0 8px rgba(255, 87, 34, 0.4);">🔥 ${currentStreak}</span>`;
+
   const userBadge = document.getElementById('user-display-name');
-  if(userBadge) userBadge.innerHTML = isPro ? `| ${student} <span class="pro-badge">👑 PRO</span> ${streakBadge}` : `| Student: ${student} ${streakBadge}`;
+  if (isPro) {
+      userBadge.innerHTML = `| ${student} <span class="pro-badge">👑 PRO</span> ${streakBadge}`;
+  } else {
+      userBadge.innerHTML = `| Student: ${student} ${streakBadge}`;
+  }
 
   const hiraCard = document.getElementById('card-hiragana');
   const kataCard = document.getElementById('card-katakana');
   const kanjiCard = document.getElementById('card-kanji');
 
-  if(hiraCard) hiraCard.onclick = () => openSystem('hiragana');
-  if(kataCard && hiraComplete) { kataCard.classList.remove('locked'); kataCard.onclick = () => openSystem('katakana'); }
-  if(kanjiCard && kataComplete) {
-      if (isPro) { kanjiCard.classList.remove('locked'); kanjiCard.classList.add('pro-unlocked'); kanjiCard.onclick = () => openSystem('kanji'); } 
-      else { kanjiCard.classList.add('locked'); kanjiCard.onclick = () => alert("⭐️ PRO ACCOUNT REQUIRED!"); }
+  hiraCard.onclick = () => openSystem('hiragana');
+  
+  if (hiraComplete) {
+    kataCard.classList.remove('locked');
+    kataCard.onclick = () => openSystem('katakana');
+  }
+  
+  if (kataComplete) {
+    if (isPro) {
+        kanjiCard.classList.remove('locked');
+        kanjiCard.classList.add('pro-unlocked');
+        kanjiCard.onclick = () => openSystem('kanji');
+    } else {
+        kanjiCard.classList.add('locked');
+        kanjiCard.classList.remove('pro-unlocked');
+        kanjiCard.onclick = () => alert("⭐️ PRO ACCOUNT REQUIRED!");
+    }
   }
 }
 
 function openSystem(systemName) {
   currentSystem = systemName;
   hideAllViews();
-  if(viewLevels) viewLevels.classList.add('active');
-  if(navHomeBtn) navHomeBtn.classList.remove('hidden');
-  if(navLevelsBtn) navLevelsBtn.classList.add('hidden');
-  const title = document.getElementById('system-title');
-  if(title) title.textContent = `${systemName.toUpperCase()} LEVELS`;
+  viewLevels.classList.add('active');
+  navHomeBtn.classList.remove('hidden');
+  navLevelsBtn.classList.add('hidden');
+  document.getElementById('system-title').textContent = `${systemName.toUpperCase()} LEVELS`;
   renderLevelList();
 }
 
 function renderLevelList() {
   const container = document.getElementById('level-list-container');
-  if(!container) return;
   container.innerHTML = '';
   const student = localStorage.getItem('nihongoStudent');
   db[currentSystem].forEach((level, index) => {
@@ -393,79 +450,79 @@ function renderLevelList() {
     if (savedStatus === 'unlocked') level.unlocked = true;
     const div = document.createElement('div');
     div.className = `level-row ${level.unlocked ? 'unlocked' : 'locked'}`;
-    div.innerHTML = `<h3>${level.title}</h3><span>${level.unlocked ? '🔓' : '🔒'}</span>`;
+    div.innerHTML = `<h3>${level.title}</h3><span>${level.unlocked ? '🔓 Unlocked' : '🔒 Locked'}</span>`;
     if (level.unlocked) div.onclick = () => openStudy(index);
     container.appendChild(div);
   });
 }
 
 function openStudy(levelIndex) {
-  currentLevelIndex = levelIndex; currentCharIndex = 0;
+  currentLevelIndex = levelIndex;
+  currentCharIndex = 0;
   hideAllViews();
-  if(viewStudy) viewStudy.classList.add('active'); 
-  if(navHomeBtn) navHomeBtn.classList.remove('hidden');
-  if(navLevelsBtn) navLevelsBtn.classList.remove('hidden');
-  const title = document.getElementById('study-level-title');
-  if(title) title.textContent = db[currentSystem][levelIndex].title;
-  loadCharacter(); renderVocabulary();
+  viewStudy.classList.add('active'); 
+  navHomeBtn.classList.remove('hidden');
+  navLevelsBtn.classList.remove('hidden');
+  document.getElementById('study-level-title').textContent = db[currentSystem][levelIndex].title;
+  loadCharacter();
+  renderVocabulary();
 }
 
 function loadCharacter() {
-  if(activeCharUI) { activeCharUI.textContent = db[currentSystem][currentLevelIndex].chars[currentCharIndex]; activeCharUI.classList.remove('enlarged-guide'); }
+  activeCharUI.textContent = db[currentSystem][currentLevelIndex].chars[currentCharIndex];
+  activeCharUI.classList.remove('enlarged-guide'); 
   if(ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
 }
 
 function renderVocabulary() {
   const student = localStorage.getItem('nihongoStudent');
   let knownChars = [];
+  
   for (let sys in db) {
       const isSystemUnlocked = sys === 'hiragana' || localStorage.getItem(`${student}_sys_${sys === 'katakana' ? 'hiragana' : 'katakana'}_complete`) === 'true';
       if (isSystemUnlocked) {
           db[sys].forEach((level, index) => {
-            if (localStorage.getItem(`${student}_progress_${sys}_${index}`) === 'unlocked' || index === 0) knownChars.push(...level.chars);
+            if (localStorage.getItem(`${student}_progress_${sys}_${index}`) === 'unlocked' || index === 0) {
+              knownChars.push(...level.chars);
+            }
           });
       }
   }
+
   const playableWords = dictionary.filter(entry => entry.word.split('').every(char => knownChars.includes(char)));
-  if(!vocabGrid) return;
   vocabGrid.innerHTML = '';
   playableWords.forEach(entry => {
-    const div = document.createElement('div'); div.className = 'vocab-item';
+    const div = document.createElement('div');
+    div.className = 'vocab-item';
     div.innerHTML = `<button class="audio-btn">🔊</button> <span class="vocab-jp">${entry.word}</span> <span class="vocab-en">${entry.mean}</span>`;
     div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
     vocabGrid.appendChild(div);
   });
 }
 
-// --- 6. STUDY BUTTONS ---
-const playAudioBtn = document.getElementById('play-audio-btn');
-if(playAudioBtn) playAudioBtn.onclick = () => playAudio(activeCharUI.textContent.trim());
-
-const clearCanvasBtn = document.getElementById('clear-canvas-btn');
-if(clearCanvasBtn) clearCanvasBtn.onclick = () => { if(ctx){ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); } };
-
-const nextCharBtn = document.getElementById('next-char-btn');
-if(nextCharBtn) nextCharBtn.onclick = () => {
+// --- 7. BUTTONS ---
+document.getElementById('play-audio-btn').onclick = () => playAudio(activeCharUI.textContent.trim());
+document.getElementById('clear-canvas-btn').onclick = () => { if(ctx){ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); } };
+document.getElementById('next-char-btn').onclick = () => {
   currentCharIndex = (currentCharIndex + 1) % db[currentSystem][currentLevelIndex].chars.length;
   loadCharacter();
 };
 
-const passLevelBtn = document.getElementById('pass-level-btn');
-if(passLevelBtn) passLevelBtn.onclick = () => {
+document.getElementById('pass-level-btn').onclick = () => {
   const student = localStorage.getItem('nihongoStudent');
   if (currentLevelIndex + 1 < db[currentSystem].length) {
     localStorage.setItem(`${student}_progress_${currentSystem}_${currentLevelIndex + 1}`, 'unlocked');
-    alert(`🎉 Level Passed!`);
-    renderVocabulary(); openStudy(currentLevelIndex + 1); 
+    alert(`🎉 Level Passed! Check your Sentence Bank!`);
+    renderVocabulary();
+    openStudy(currentLevelIndex + 1); 
   } else {
     localStorage.setItem(`${student}_sys_${currentSystem}_complete`, 'true');
     alert(`🏆 Course Mastered!`);
-    hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); renderCourseCards();
+    hideAllViews(); viewHome.classList.add('active'); navHomeBtn.classList.add('hidden'); renderCourseCards();
   }
 };
 
-const showGuideBtn = document.getElementById('show-guide-btn');
-if(showGuideBtn) showGuideBtn.onclick = async () => {
+document.getElementById('show-guide-btn').onclick = async () => {
   let char = activeCharUI.textContent.trim();
   const hex = char.charCodeAt(0).toString(16).padStart(5, '0');
   try {
@@ -481,69 +538,55 @@ if(showGuideBtn) showGuideBtn.onclick = async () => {
   } catch (e) { alert("Guide unavailable."); }
 };
 
-// --- 7. QUIZ MODULE (WITH SMART REVIEW) ---
-const startCharBtn = document.getElementById('start-char-quiz-btn');
-if(startCharBtn) startCharBtn.onclick = () => { currentQuizMode = 'char'; startQuiz(); };
-
-const startVocabBtn = document.getElementById('start-vocab-quiz-btn');
-if(startVocabBtn) startVocabBtn.onclick = () => { currentQuizMode = 'vocab'; startQuiz(); };
-
-const startReviewBtn = document.getElementById('start-review-btn');
-if(startReviewBtn) {
-    startReviewBtn.onclick = () => {
-        const student = localStorage.getItem('nihongoStudent');
-        let weakWords = JSON.parse(localStorage.getItem(`${student}_weak_words`)) || [];
-        if (weakWords.length < 4) return alert("Make more mistakes in Vocab quizzes to build your review deck!");
-        currentQuizMode = 'vocab'; quizPool = weakWords; currentQuestion = 0; score = 0; 
-        hideAllViews(); if(viewQuiz) viewQuiz.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadNextQuestion();
-    };
-}
-
-const quitQuizBtn = document.getElementById('quit-quiz-btn');
-if(quitQuizBtn) quitQuizBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+// --- 8. QUIZ MODULE ---
+document.getElementById('start-char-quiz-btn').onclick = () => { currentQuizMode = 'char'; startQuiz(); };
+document.getElementById('start-vocab-quiz-btn').onclick = () => { currentQuizMode = 'vocab'; startQuiz(); };
 
 function startQuiz() {
   const student = localStorage.getItem('nihongoStudent');
   let knownChars = [];
+  
   for (let sys in db) {
       const isSystemUnlocked = sys === 'hiragana' || localStorage.getItem(`${student}_sys_${sys === 'katakana' ? 'hiragana' : 'katakana'}_complete`) === 'true';
       if (isSystemUnlocked) {
         db[sys].forEach((l, i) => { if (localStorage.getItem(`${student}_progress_${sys}_${i}`) === 'unlocked' || i === 0) knownChars.push(...l.chars); });
       }
   }
+
   quizPool = currentQuizMode === 'char' ? [...new Set(knownChars)] : dictionary.filter(e => e.word.split('').every(c => knownChars.includes(c)));
   if (quizPool.length < 4) return alert("Unlock more items first!");
-  currentQuestion = 0; score = 0; 
-  hideAllViews(); if(viewQuiz) viewQuiz.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadNextQuestion();
+  currentQuestion = 0; score = 0; hideAllViews(); viewQuiz.classList.add('active'); navHomeBtn.classList.remove('hidden'); loadNextQuestion();
 }
 
 function loadNextQuestion() {
-  if (currentQuestion >= 10) { alert(`Score: ${score}/10`); hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); return; }
+  if (currentQuestion >= 10) { alert(`Score: ${score}/10`); hideAllViews(); viewHome.classList.add('active'); navHomeBtn.classList.add('hidden'); return; }
   currentQuestion++;
-  const prog = document.getElementById('quiz-progress'); if(prog) prog.textContent = `Question ${currentQuestion} / 10`;
+  document.getElementById('quiz-progress').textContent = `Question ${currentQuestion} / 10`;
   const pool = [...quizPool].sort(() => 0.5 - Math.random());
   correctAnswer = pool[0];
   const options = pool.slice(0, 4).sort(() => 0.5 - Math.random());
-  
-  const qWord = document.getElementById('quiz-word');
-  if(qWord) qWord.textContent = currentQuizMode === 'char' ? correctAnswer : correctAnswer.word;
-  
-  const grid = document.getElementById('quiz-options'); if(!grid) return; grid.innerHTML = '';
+  document.getElementById('quiz-word').textContent = currentQuizMode === 'char' ? correctAnswer : correctAnswer.word;
+  const grid = document.getElementById('quiz-options'); grid.innerHTML = '';
   options.forEach(opt => {
     const btn = document.createElement('button'); btn.className = 'quiz-btn';
     btn.textContent = currentQuizMode === 'char' ? (characterMap[opt] || opt) : opt.mean;
-    
     btn.onclick = () => {
       document.querySelectorAll('.quiz-btn').forEach(b => b.disabled = true);
+      
       const student = localStorage.getItem('nihongoStudent');
       let weakWords = JSON.parse(localStorage.getItem(`${student}_weak_words`)) || [];
 
       if (opt === correctAnswer) { 
-          btn.classList.add('correct'); score++; 
+          btn.classList.add('correct'); 
+          score++; 
+          // If they get it right, remove it from the weak list!
           weakWords = weakWords.filter(w => w.word !== correctAnswer.word);
       } else { 
           btn.classList.add('wrong'); 
-          if (currentQuizMode === 'vocab' && !weakWords.some(w => w.word === correctAnswer.word)) weakWords.push(correctAnswer);
+          // If they get it wrong, add it to the weak list for Smart Review!
+          if (!weakWords.some(w => w.word === correctAnswer.word)) {
+              weakWords.push(correctAnswer);
+          }
       }
       localStorage.setItem(`${student}_weak_words`, JSON.stringify(weakWords));
       setTimeout(loadNextQuestion, 1500);
@@ -552,150 +595,314 @@ function loadNextQuestion() {
   });
 }
 
-// --- 8. READING MODULE ---
-let currentParagraphIndex = 0;
+// --- 9. READING MODULE ---
 const startReadingBtn = document.getElementById('start-reading-btn');
+const readingJpUI = document.getElementById('reading-jp');
+const readingEnUI = document.getElementById('reading-en');
+const toggleTransBtn = document.getElementById('toggle-translation-btn');
+const nextParaBtn = document.getElementById('next-paragraph-btn');
+const readAudioBtn = document.getElementById('read-audio-btn');
 const quitReadingBtn = document.getElementById('quit-reading-btn');
-if (startReadingBtn) startReadingBtn.onclick = () => { currentParagraphIndex = 0; hideAllViews(); if(viewReading) viewReading.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadParagraph(); };
-if (quitReadingBtn) quitReadingBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+
+if (startReadingBtn) {
+    startReadingBtn.onclick = () => {
+        currentParagraphIndex = 0;
+        hideAllViews();
+        viewReading.classList.add('active');
+        navHomeBtn.classList.remove('hidden');
+        loadParagraph();
+    };
+}
 
 function loadParagraph() {
     const data = readingDb[currentParagraphIndex];
-    const jpUI = document.getElementById('reading-jp'); const enUI = document.getElementById('reading-en'); const tBtn = document.getElementById('toggle-translation-btn');
-    if(jpUI) jpUI.textContent = data.jp;
-    if(enUI) { enUI.textContent = data.en; enUI.classList.add('hidden'); }
-    if(tBtn) tBtn.textContent = "👁️ Translate";
+    readingJpUI.textContent = data.jp;
+    readingEnUI.textContent = data.en;
+    readingEnUI.classList.add('hidden'); 
+    toggleTransBtn.textContent = "👁️ Show Translation";
 }
 
-const toggleTransBtn = document.getElementById('toggle-translation-btn');
-if (toggleTransBtn) toggleTransBtn.onclick = () => {
-    const enUI = document.getElementById('reading-en');
-    if(enUI) enUI.classList.toggle('hidden');
-    toggleTransBtn.textContent = enUI.classList.contains('hidden') ? "👁️ Translate" : "🙈 Hide";
-};
+if (toggleTransBtn) {
+    toggleTransBtn.onclick = () => {
+        readingEnUI.classList.toggle('hidden');
+        if (readingEnUI.classList.contains('hidden')) {
+            toggleTransBtn.textContent = "👁️ Show Translation";
+        } else {
+            toggleTransBtn.textContent = "🙈 Hide Translation";
+        }
+    };
+}
 
-const nextParaBtn = document.getElementById('next-paragraph-btn');
-if (nextParaBtn) nextParaBtn.onclick = () => {
-    currentParagraphIndex++;
-    if (currentParagraphIndex >= readingDb.length) { currentParagraphIndex = 0; alert("Finished!"); hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); } 
-    else { loadParagraph(); }
-};
+if (nextParaBtn) {
+    nextParaBtn.onclick = () => {
+        currentParagraphIndex++;
+        if (currentParagraphIndex >= readingDb.length) {
+            currentParagraphIndex = 0; 
+            alert("You finished all paragraphs! Great job!");
+            hideAllViews();
+            viewHome.classList.add('active');
+            navHomeBtn.classList.add('hidden');
+        } else {
+            loadParagraph();
+        }
+    };
+}
 
-const readAudioBtn = document.getElementById('read-audio-btn');
-if (readAudioBtn) readAudioBtn.onclick = () => playAudio(readingDb[currentParagraphIndex].jp);
+if (readAudioBtn) {
+    readAudioBtn.onclick = () => {
+        playAudio(readingDb[currentParagraphIndex].jp);
+    };
+}
 
+if (quitReadingBtn) {
+    quitReadingBtn.onclick = () => {
+        hideAllViews();
+        viewHome.classList.add('active');
+        navHomeBtn.classList.add('hidden');
+    };
+}
 
-// --- 9. SENTENCE BANK MODULE ---
+// --- 10. SENTENCE BANK MODULE ---
 const startSentencesBtn = document.getElementById('start-sentences-btn');
+const sentenceListUI = document.getElementById('sentence-list');
 const quitSentencesBtn = document.getElementById('quit-sentences-btn');
-if (startSentencesBtn) startSentencesBtn.onclick = () => { hideAllViews(); if(viewSentences) viewSentences.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); renderSentences(); };
-if (quitSentencesBtn) quitSentencesBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+
+if (startSentencesBtn) {
+    startSentencesBtn.onclick = () => {
+        hideAllViews();
+        viewSentences.classList.add('active');
+        navHomeBtn.classList.remove('hidden');
+        renderSentences();
+    };
+}
+
+if (quitSentencesBtn) {
+    quitSentencesBtn.onclick = () => {
+        hideAllViews();
+        viewHome.classList.add('active');
+        navHomeBtn.classList.add('hidden');
+    };
+}
 
 function renderSentences() {
     const student = localStorage.getItem('nihongoStudent');
-    const listUI = document.getElementById('sentence-list');
-    if(!listUI) return;
-    listUI.innerHTML = '';
+    sentenceListUI.innerHTML = '';
+
     let unlockedCount = 0;
 
     sentenceDb.forEach(item => {
         let isUnlocked = false;
-        if (localStorage.getItem(`${student}_sys_${item.sys}_complete`) === 'true') isUnlocked = true;
-        else if (localStorage.getItem(`${student}_progress_${item.sys}_${item.level}`) === 'unlocked') isUnlocked = true;
+
+        if (localStorage.getItem(`${student}_sys_${item.sys}_complete`) === 'true') {
+            isUnlocked = true;
+        } else if (localStorage.getItem(`${student}_progress_${item.sys}_${item.level}`) === 'unlocked') {
+            isUnlocked = true;
+        }
 
         if (isUnlocked) {
             unlockedCount++;
             const div = document.createElement('div');
-            div.style.cssText = 'background: #1a1a24; padding: 20px; border-radius: 12px; border-left: 4px solid #9c27b0; display: flex; justify-content: space-between; align-items: center;';
-            div.innerHTML = `<div><div style="font-size: 1.4rem; color: #fff; font-weight: bold; margin-bottom: 5px;">${item.jp}</div><div style="font-size: 1rem; color: #aaa;">${item.en}</div></div><button class="audio-btn" style="font-size: 1.8rem; background: none; border: none; cursor: pointer;">🔊</button>`;
+            div.style.background = '#1a1a24';
+            div.style.padding = '20px';
+            div.style.borderRadius = '12px';
+            div.style.borderLeft = '4px solid #9c27b0';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'space-between';
+            div.style.alignItems = 'center';
+
+            div.innerHTML = `
+                <div>
+                    <div style="font-size: 1.4rem; color: #fff; font-weight: bold; margin-bottom: 5px;">${item.jp}</div>
+                    <div style="font-size: 1rem; color: #aaa;">${item.en}</div>
+                </div>
+                <button class="audio-btn" style="font-size: 1.8rem; background: none; border: none; cursor: pointer; transition: transform 0.2s ease;">🔊</button>
+            `;
+
             div.querySelector('.audio-btn').onclick = () => playAudio(item.jp);
-            listUI.appendChild(div);
+            sentenceListUI.appendChild(div);
         }
     });
-    if (unlockedCount === 0) listUI.innerHTML = `<div style="text-align: center; padding: 40px; background: #1a1a24; border-radius: 12px; border: 1px dashed #444;"><span style="font-size: 3rem; display: block; margin-bottom: 15px;">🔒</span><p style="color: #aaa; font-size: 1.1rem;">Your sentence vault is locked.</p></div>`;
-}
 
-// --- 10. THE LIBRARY MODULE ---
-const startLibraryBtn = document.getElementById('start-library-btn');
-const quitLibraryBtn = document.getElementById('quit-library-btn');
-const librarySearch = document.getElementById('library-search');
-
-if (startLibraryBtn) startLibraryBtn.onclick = () => { hideAllViews(); if(viewLibrary) viewLibrary.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); renderLibrary(""); };
-if (quitLibraryBtn) quitLibraryBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
-if (librarySearch) librarySearch.addEventListener('input', (e) => renderLibrary(e.target.value.toLowerCase()));
-
-function renderLibrary(searchTerm) {
-    const results = document.getElementById('library-results'); if(!results) return;
-    results.innerHTML = '';
-    const filtered = dictionary.filter(entry => entry.mean.toLowerCase().includes(searchTerm) || entry.word.includes(searchTerm));
-    
-    filtered.forEach(entry => {
-        const div = document.createElement('div');
-        div.style.cssText = 'background: #1a1a24; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;';
-        div.innerHTML = `<div><span style="font-size: 1.5rem; color: white; font-weight: bold; margin-right: 15px;">${entry.word}</span><span style="color: #aaa;">${entry.mean}</span></div><button class="audio-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🔊</button>`;
-        div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
-        results.appendChild(div);
-    });
-}
-
-// --- 11. TYPING STUDIO MODULE ---
-const startTypingBtn = document.getElementById('start-typing-btn');
-const quitTypingBtn = document.getElementById('quit-typing-btn');
-let targetRomaji = ""; let currentTyped = "";
-
-if (startTypingBtn) startTypingBtn.onclick = () => { hideAllViews(); if(viewTyping) viewTyping.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadTypingWord(); };
-if (quitTypingBtn) quitTypingBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
-
-function loadTypingWord() {
-    const randomEntry = dictionary[Math.floor(Math.random() * dictionary.length)];
-    const jpUI = document.getElementById('typing-jp'); const enUI = document.getElementById('typing-en');
-    if(jpUI) jpUI.textContent = randomEntry.word;
-    if(enUI) enUI.textContent = randomEntry.mean;
-    
-    const match = randomEntry.mean.match(/\(([^)]+)\)/);
-    targetRomaji = match ? match[1].toLowerCase().replace(/\s/g, '') : "";
-    currentTyped = ""; updateTypingDisplay();
-}
-
-function updateTypingDisplay() {
-    const disp = document.getElementById('typing-input-display'); if(disp) disp.textContent = currentTyped;
-}
-
-document.addEventListener('keydown', (e) => {
-    if (!viewTyping || !viewTyping.classList.contains('active')) return;
-    if (e.key.length > 1 && e.key !== 'Backspace') return; 
-
-    if (e.key === 'Backspace') currentTyped = currentTyped.slice(0, -1);
-    else currentTyped += e.key.toLowerCase();
-    
-    updateTypingDisplay();
-
-    if (currentTyped === targetRomaji) {
-        const disp = document.getElementById('typing-input-display'); const jpUI = document.getElementById('typing-jp');
-        if(disp) disp.style.color = "#28a745"; 
-        if(jpUI) playAudio(jpUI.textContent);
-        setTimeout(() => { if(disp) disp.style.color = "#00d2ff"; loadTypingWord(); }, 500);
+    if (unlockedCount === 0) {
+        sentenceListUI.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #1a1a24; border-radius: 12px; border: 1px dashed #444;">
+                <span style="font-size: 3rem; display: block; margin-bottom: 15px;">🔒</span>
+                <p style="color: #aaa; font-size: 1.1rem;">Your sentence vault is currently locked.</p>
+                <p style="color: #888; font-size: 0.9rem;">Pass your first few Hiragana levels to start unlocking phrases!</p>
+            </div>
+        `;
     }
-});
+}
 
-// --- 12. CANVAS DRAWING ---
+// --- 11. CANVAS DRAWING ---
 if(canvas && ctx) {
-    ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';      
+    ctx.strokeStyle = '#00d2ff'; 
+    ctx.lineWidth = 8;           
+    ctx.lineCap = 'round';       
+    ctx.lineJoin = 'round';      
+
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; draw(e); });
     canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
     canvas.addEventListener('mousemove', draw);
     
-    // Add touch support for mobile drawing
-    canvas.addEventListener('touchstart', (e) => { isDrawing = true; draw(e.touches[0]); e.preventDefault(); }, {passive: false});
-    canvas.addEventListener('touchend', () => { isDrawing = false; ctx.beginPath(); });
-    canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); }, {passive: false});
-
     function draw(e) {
       if (!isDrawing) return;
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-      ctx.stroke(); ctx.beginPath(); ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
     }
 }
+// ==========================================
+// --- 12. SMART REVIEW MODULE ---
+// ==========================================
+document.getElementById('start-review-btn').onclick = () => {
+    const student = localStorage.getItem('nihongoStudent');
+    let weakWords = JSON.parse(localStorage.getItem(`${student}_weak_words`)) || [];
+    
+    if (weakWords.length < 4) {
+        alert("You don't have enough weak words to review yet! Keep taking normal quizzes and making mistakes to build your review deck.");
+        return;
+    }
+    
+    currentQuizMode = 'vocab';
+    quizPool = weakWords; // Load ONLY the words they failed!
+    currentQuestion = 0; 
+    score = 0; 
+    hideAllViews(); 
+    viewQuiz.classList.add('active'); 
+    navHomeBtn.classList.remove('hidden'); 
+    loadNextQuestion();
+};
+
+// ==========================================
+// --- 13. THE LIBRARY MODULE ---
+// ==========================================
+const startLibraryBtn = document.getElementById('start-library-btn');
+const quitLibraryBtn = document.getElementById('quit-library-btn');
+const librarySearch = document.getElementById('library-search');
+const libraryResults = document.getElementById('library-results');
+
+if (startLibraryBtn) {
+    startLibraryBtn.onclick = () => {
+        hideAllViews();
+        viewLibrary.classList.add('active');
+        navHomeBtn.classList.remove('hidden');
+        renderLibrary(""); // Render all initially
+    };
+}
+
+if (quitLibraryBtn) {
+    quitLibraryBtn.onclick = () => {
+        hideAllViews();
+        viewHome.classList.add('active');
+        navHomeBtn.classList.add('hidden');
+    };
+}
+
+if (librarySearch) {
+    librarySearch.addEventListener('input', (e) => {
+        renderLibrary(e.target.value.toLowerCase());
+    });
+}
+
+function renderLibrary(searchTerm) {
+    libraryResults.innerHTML = '';
+    const filtered = dictionary.filter(entry => entry.mean.toLowerCase().includes(searchTerm) || entry.word.includes(searchTerm));
+    
+    filtered.forEach(entry => {
+        const div = document.createElement('div');
+        div.style.background = '#1a1a24';
+        div.style.padding = '15px';
+        div.style.borderRadius = '8px';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <div>
+                <span style="font-size: 1.5rem; color: white; font-weight: bold; margin-right: 15px;">${entry.word}</span>
+                <span style="color: #aaa;">${entry.mean}</span>
+            </div>
+            <button class="audio-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🔊</button>
+        `;
+        div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
+        libraryResults.appendChild(div);
+    });
+}
+
+// ==========================================
+// --- 14. TYPING STUDIO MODULE ---
+// ==========================================
+const startTypingBtn = document.getElementById('start-typing-btn');
+const quitTypingBtn = document.getElementById('quit-typing-btn');
+const typingJpUI = document.getElementById('typing-jp');
+const typingEnUI = document.getElementById('typing-en');
+const typingInputDisplay = document.getElementById('typing-input-display');
+
+let targetRomaji = "";
+let currentTyped = "";
+
+if (startTypingBtn) {
+    startTypingBtn.onclick = () => {
+        hideAllViews();
+        viewTyping.classList.add('active');
+        navHomeBtn.classList.remove('hidden');
+        loadTypingWord();
+    };
+}
+
+if (quitTypingBtn) {
+    quitTypingBtn.onclick = () => {
+        hideAllViews();
+        viewHome.classList.add('active');
+        navHomeBtn.classList.add('hidden');
+    };
+}
+
+function loadTypingWord() {
+    // Pick a random word from the dictionary
+    const randomEntry = dictionary[Math.floor(Math.random() * dictionary.length)];
+    typingJpUI.textContent = randomEntry.word;
+    typingEnUI.textContent = randomEntry.mean;
+    
+    // Extract Romaji from the parentheses in your dictionary (e.g., "Blue (ao)" -> "ao")
+    const match = randomEntry.mean.match(/\(([^)]+)\)/);
+    targetRomaji = match ? match[1].toLowerCase().replace(/\s/g, '') : "";
+    
+    currentTyped = "";
+    updateTypingDisplay();
+}
+
+function updateTypingDisplay() {
+    typingInputDisplay.textContent = currentTyped;
+}
+
+// Global Keyboard Listener for Typing Studio
+document.addEventListener('keydown', (e) => {
+    // Only listen if the typing view is active
+    if (!viewTyping.classList.contains('active')) return;
+    
+    // Ignore meta keys (Shift, Ctrl, etc)
+    if (e.key.length > 1 && e.key !== 'Backspace') return; 
+
+    if (e.key === 'Backspace') {
+        currentTyped = currentTyped.slice(0, -1);
+    } else {
+        currentTyped += e.key.toLowerCase();
+    }
+    
+    updateTypingDisplay();
+
+    // Check if they typed it correctly!
+    if (currentTyped === targetRomaji) {
+        typingInputDisplay.style.color = "#28a745"; // Flash green!
+        playAudio(typingJpUI.textContent);
+        setTimeout(() => {
+            typingInputDisplay.style.color = "#00d2ff"; // Reset color
+            loadTypingWord(); // Load next word
+        }, 500);
+    }
+});

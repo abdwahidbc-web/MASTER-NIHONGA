@@ -148,6 +148,13 @@
       </section>
     </div>
   </main>
+<script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      alert("🚨 MOBILE CRASH DETECTED 🚨\n\nError: " + message + "\n\nLine Number: " + lineno);
+      return true; 
+    };
+  </script>
 
-<script src="app.js?v=2"></script></body>
+  <script src="app.js"></script>
+</body>
 </html>

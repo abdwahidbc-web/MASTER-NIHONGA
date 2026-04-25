@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nihongo Master | Registration</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #1a1a24;">
+
+  <div style="background: #2a2a35; padding: 40px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <h1 style="color: #00d2ff; margin-bottom: 10px;">日本語 Master</h1>
+    <p id="auth-subtitle" style="color: #aaa; margin-bottom: 30px;">Register to begin your journey</p>
+    
+    <div id="register-section">
+      <input type="text" id="reg-username" placeholder="Choose a Username" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
+      <input type="email" id="reg-email" placeholder="Enter your Email" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
+      <input type="password" id="reg-password" placeholder="Choose a Password" style="width: 100%; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
+      <button id="register-btn" class="primary-btn" style="width: 100%;">Enter Academy</button>
+      
+      <p style="margin-top: 20px; color: #aaa; font-size: 0.9rem;">
+        Already a student? <span id="show-login" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Log in here</span>
+      </p>
+    </div>
+
+    <div id="login-section" class="hidden">
+      <input type="email" id="login-email" placeholder="Enter your Email" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
+      <input type="password" id="login-password" placeholder="Enter your Password" style="width: 100%; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
+      <button id="login-btn" class="primary-btn" style="width: 100%; background: #ff3366; color: white;">Welcome Back</button>
+      
+      <p style="margin-top: 20px; color: #aaa; font-size: 0.9rem;">
+        Need an account? <span id="show-register" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Register here</span>
+      </p>
+    <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 15px;">
+      <a href="admin.html" style="color: #555; text-decoration: none; font-size: 0.8rem; transition: 0.3s;" onmouseover="this.style.color='#00d2ff'" onmouseout="this.style.color='#555'">
+        🔒 Admin Portal
+      </a>
+    </div>
+
+  </div> <script type="module" src="auth.js"></script>
+</body>
+</html>

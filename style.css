@@ -1,5 +1,15 @@
-body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background-color: #1a1a24; color: #fff; }
+* {
+  box-sizing: border-box;
+}
 
+body {
+  overflow-x: hidden; /* Stops horizontal scrolling entirely */
+}
+
+img, canvas, div {
+  max-width: 100%; /* Stops elements from growing wider than the phone screen */
+}
+body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background-color: #1a1a24; color: #fff; }
 .navbar { display: flex; justify-content: space-between; padding: 20px 40px; background-color: #2a2a35; border-bottom: 2px solid #333; }
 .logo { font-size: 1.5rem; font-weight: 900; color: #00d2ff; }
 .user-badge { color: #aaa; font-size: 1rem; font-weight: normal; }

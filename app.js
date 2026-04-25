@@ -58,31 +58,21 @@ document.body.addEventListener('touchstart', function unlockAudio() {
 }, { once: true });
 
 function playAudio(text) {
-  if (!synth || typeof synth.speak !== 'function') {
-      console.warn("Audio is blocked by your mobile device.");
-      return; // Stop here, do NOT crash the app
-  }
-  
   try {
-      synth.cancel(); 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ja-JP'; 
+      // BULLETPROOF AUDIO: Bypasses the phone's broken voice engine completely
+      // Streams a live MP3 pronunciation directly from the web
+      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
+      const audio = new Audio(audioUrl);
       
+      // Check for Snail Mode
       const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
-      utterance.rate = isSlowMode ? 0.4 : 0.8; 
+      audio.playbackRate = isSlowMode ? 0.5 : 1.0; 
       
-      if (typeof synth.getVoices === 'function') {
-          const voices = synth.getVoices();
-          const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-          if (jaVoice) utterance.voice = jaVoice;
-      }
-      
-      synth.speak(utterance);
+      audio.play();
   } catch(e) {
-      console.log("Audio play failed, ignoring error.");
+      console.log("Audio stream failed to play.");
   }
 }
-
 // --- 3. STATE MANAGEMENT ---
 let currentSystem = ''; let currentLevelIndex = 0; let currentCharIndex = 0;
 let quizPool = []; let currentQuestion = 0; let score = 0; let correctAnswer = null; let currentQuizMode = 'char';

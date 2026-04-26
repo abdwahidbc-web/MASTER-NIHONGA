@@ -8,50 +8,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   
   <style>
-    html, body {
-      max-width: 100vw;
-      overflow-x: hidden; /* Stops left/right scrolling */
-      margin: 0;
-      padding: 0;
-    }
-    * {
-      box-sizing: border-box;
-      max-width: 100%;
-    }
-    .path-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      padding: 10px;
-    }
-    .path-card {
-      width: 100%; /* Makes cards stack on mobile */
-      max-width: 300px;
-    }
-    .practice-panels {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-    }
-    .quiz-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
+    html, body { max-width: 100vw; overflow-x: hidden; margin: 0; padding: 0; background: #121212; color: white; font-family: 'Noto Sans JP', sans-serif;}
+    * { box-sizing: border-box; max-width: 100%; }
+    
+    /* When study mode is active, lock the body so the phone doesn't scroll */
+    body.study-active { overflow: hidden; }
+
+    .path-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 10px; }
+    .path-card { width: 100%; max-width: 300px; }
+    .quiz-options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   </style>
 </head>
 <body>
 
-  <nav class="navbar" id="main-nav">
+  <nav class="navbar" id="main-nav" style="display: flex;">
     <div class="logo">日本語 Master <span id="user-display-name" class="user-badge" style="font-size: 0.8rem;"></span></div>
-    
     <div class="nav-links" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <label style="color: #aaa; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-        <input type="checkbox" id="slow-audio-toggle" style="cursor: pointer;">
-        🐢
+        <input type="checkbox" id="slow-audio-toggle" style="cursor: pointer;"> 🐢
       </label>
       <button id="nav-home-btn" class="nav-btn hidden">Back</button>
       <button id="nav-levels-btn" class="nav-btn hidden">Levels</button>
@@ -62,21 +36,9 @@
   <main id="view-home" class="view active" style="padding: 15px;">
     <h1 class="view-title" style="font-size: 1.8rem; margin-top: 20px;">Select Your Course</h1>
     <div class="path-container">
-      <div class="path-card hiragana-path" id="card-hiragana">
-        <div class="path-icon">あ</div>
-        <h2>Hiragana</h2>
-        <p>The native foundation.</p>
-      </div>
-      <div class="path-card katakana-path locked" id="card-katakana">
-        <div class="path-icon">ア</div>
-        <h2>Katakana</h2>
-        <p>Complete Hiragana to unlock.</p>
-      </div>
-      <div class="path-card kanji-path locked" id="card-kanji">
-        <div class="path-icon">漢</div>
-        <h2>Kanji</h2>
-        <p>Complete Katakana to unlock.</p>
-      </div>
+      <div class="path-card hiragana-path" id="card-hiragana"><div class="path-icon">あ</div><h2>Hiragana</h2><p>The native foundation.</p></div>
+      <div class="path-card katakana-path locked" id="card-katakana"><div class="path-icon">ア</div><h2>Katakana</h2><p>Complete Hiragana to unlock.</p></div>
+      <div class="path-card kanji-path locked" id="card-kanji"><div class="path-icon">漢</div><h2>Kanji</h2><p>Complete Katakana to unlock.</p></div>
     </div>
     
     <div style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
@@ -147,37 +109,38 @@
     <div class="level-list" id="level-list-container"></div>
   </main>
 
-  <main id="view-study" class="view" style="padding: 15px;">
-    <div class="study-layout">
-      <section class="character-section">
-        <h2 id="study-level-title" style="font-size: 1.5rem;">Level Name</h2>
-        <div class="practice-panels">
-          <div class="panel">
-            <span class="panel-label">Reference</span>
-            <div class="char-reference" id="active-char">あ</div>
+  <main id="view-study" class="view" style="background: #121212;">
+    
+    <div style="height: 100dvh; max-height: 100vh; display: flex; flex-direction: column; padding: 10px 15px; overflow: hidden; max-width: 500px; margin: 0 auto;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-bottom: 15px;">
+        <button id="study-back-btn" style="background: #2a2a35; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;">⬅ Back</button>
+        <h2 id="study-level-title" style="margin: 0; font-size: 1.2rem; color: #fff;">Level Name</h2>
+        <div style="width: 70px;"></div> </div>
+
+      <div style="display: flex; justify-content: space-evenly; align-items: center; flex-shrink: 0; gap: 10px;">
+        <div id="active-char" style="font-size: 5rem; width: 140px; height: 140px; background: #1a1a24; border-radius: 15px; display: flex; justify-content: center; align-items: center; border: 2px solid #333;">あ</div>
+        <canvas id="writing-canvas" width="140" height="140" style="background: #1a1a24; border-radius: 15px; border: 2px solid #333;"></canvas>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-shrink: 0; margin: 15px 0;">
+        <button id="play-audio-btn" style="flex: 1; padding: 12px 0; background: #2a2a35; color: white; border: none; border-radius: 8px; font-size: 1.2rem; cursor: pointer;">🔊</button>
+        <button id="show-guide-btn" style="flex: 1; padding: 12px 0; background: #2a2a35; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Guide</button>
+        <button id="clear-canvas-btn" style="flex: 1; padding: 12px 0; background: #2a2a35; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Clear</button>
+        <button id="next-char-btn" style="flex: 2; padding: 12px 0; background: #00d2ff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Next ➔</button>
+      </div>
+
+      <div style="flex-grow: 1; background: #1a1a24; border-radius: 12px; border: 1px solid #3f51b5; display: flex; flex-direction: column; overflow: hidden;">
+        <div style="background: #3f51b5; color: white; text-align: center; padding: 5px; font-size: 0.9rem; font-weight: bold;">Unlocked Vocab</div>
+        <div id="vocab-grid" style="padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto;">
           </div>
-          <div class="panel writing-panel">
-            <span class="panel-label">Practice</span>
-            <canvas id="writing-canvas" width="250" height="250" style="max-width: 100%;"></canvas>
-          </div>
-        </div>
-        <div class="board-controls" style="margin-top: 20px; text-align: center;">
-          <button id="next-char-btn" class="primary-btn" style="width: 100%; margin-bottom: 10px;">Next Character ➔</button>
-          <div class="sub-controls" style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-            <button id="play-audio-btn" class="secondary-btn">🔊 Listen</button>
-            <button id="show-guide-btn" class="secondary-btn">Guide</button>
-            <button id="clear-canvas-btn" class="secondary-btn">Clear</button>
-          </div>
-          <button id="pass-level-btn" class="success-btn" style="width: 100%;">Pass Level Exam</button>
-        </div>
-      </section>
-      <section class="vocab-section" style="margin-top: 30px;">
-        <h2>Unlocked Vocab</h2>
-        <div id="vocab-grid" class="vocab-grid"></div>
-      </section>
+      </div>
+
+      <button id="pass-level-btn" style="flex-shrink: 0; margin-top: 15px; margin-bottom: 10px; width: 100%; padding: 15px; font-size: 1.2rem; font-weight: bold; background: #28a745; color: white; border: none; border-radius: 50px; cursor: pointer;">Pass Level Exam</button>
+      
     </div>
   </main>
 
- <script src="app.js?v=5000"></script
+  <script src="app.js?v=9000"></script>
 </body>
 </html>

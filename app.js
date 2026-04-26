@@ -1,5 +1,5 @@
 // ==========================================
-// NIHONGO MASTER | MOBILE CRASH-PROOF V3
+// NIHONGO MASTER | MOBILE CRASH-PROOF V5 (EXPANDED DATA)
 // ==========================================
 
 const viewHome = document.getElementById('view-home');
@@ -38,42 +38,23 @@ if(navHomeBtn) {
 if(navLevelsBtn) navLevelsBtn.onclick = () => openSystem(currentSystem);
 
 // ==========================================
-// --- 2. CRASH-PROOF VOICE ENGINE ---
+// --- 2. BULLETPROOF MOBILE AUDIO ---
 // ==========================================
-const synth = window.speechSynthesis || null;
-
-// Safe Wakeup
-if (synth && typeof synth.getVoices === 'function') {
-    try { synth.getVoices(); } catch (e) { console.log("Voices blocked"); }
-}
-
-document.body.addEventListener('touchstart', function unlockAudio() {
-    if (synth && typeof synth.speak === 'function') {
-        try {
-            const dummy = new SpeechSynthesisUtterance('');
-            synth.speak(dummy);
-        } catch(e) {}
-    }
-    document.body.removeEventListener('touchstart', unlockAudio);
-}, { once: true });
-
 function playAudio(text) {
   try {
-      // BULLETPROOF AUDIO: Bypasses the phone's broken voice engine completely
-      // Streams a live MP3 pronunciation directly from the web
       const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
       const audio = new Audio(audioUrl);
-      
-      // Check for Snail Mode
       const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
       audio.playbackRate = isSlowMode ? 0.5 : 1.0; 
-      
       audio.play();
   } catch(e) {
       console.log("Audio stream failed to play.");
   }
 }
+
+// ==========================================
 // --- 3. STATE MANAGEMENT ---
+// ==========================================
 let currentSystem = ''; let currentLevelIndex = 0; let currentCharIndex = 0;
 let quizPool = []; let currentQuestion = 0; let score = 0; let correctAnswer = null; let currentQuizMode = 'char';
 
@@ -83,7 +64,9 @@ const canvas = document.getElementById('writing-canvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 let isDrawing = false;
 
-// --- 4. CHARACTER DATA ---
+// ==========================================
+// --- 4. THE MASSIVE DATABASE ---
+// ==========================================
 const db = {
   hiragana: [
     { id: 'h1', title: 'Level 1: A-Row', chars: ['あ', 'い', 'う', 'え', 'お'], unlocked: true },
@@ -128,7 +111,7 @@ const db = {
     { id: 'j7', title: 'Level 7: Time & Date', chars: ['今', '年', '時', '間', '半', '分', '午'], unlocked: false },
     { id: 'j8', title: 'Level 8: School & Learning', chars: ['学', '生', '先', '校', '本', '字', '文'], unlocked: false },
     { id: 'j9', title: 'Level 9: Basic Actions', chars: ['行', '来', '見', '食', '飲', '立', '休'], unlocked: false },
-    { id: 'j10', title: 'Level 10: Adjectives (Sizes/Ages)', chars: ['大', '小', '高', '安', '新', '古', '多', '少'], unlocked: false },
+    { id: 'j10', title: 'Level 10: Adjectives', chars: ['大', '小', '高', '安', '新', '古', '多', '少'], unlocked: false },
     { id: 'j11', title: 'Level 11: Colors & Shapes', chars: ['白', '黒', '赤', '青', '円', '形'], unlocked: false },
     { id: 'j12', title: 'Level 12: Family', chars: ['父', '母', '兄', '弟', '姉', '妹', '友'], unlocked: false },
     { id: 'j13', title: 'Level 13: Weather', chars: ['雨', '雪', '風', '晴', '雲', '春', '夏', '秋', '冬'], unlocked: false },
@@ -138,30 +121,23 @@ const db = {
 };
 
 const characterMap = {
-  // Hiragana
   'あ':'a', 'い':'i', 'う':'u', 'え':'e', 'お':'o', 'か':'ka', 'き':'ki', 'く':'ku', 'け':'ke', 'こ':'ko',
   'さ':'sa', 'し':'shi', 'す':'su', 'せ':'se', 'そ':'so', 'た':'ta', 'ち':'chi', 'つ':'tsu', 'て':'te', 'と':'to',
   'な':'na', 'に':'ni', 'ぬ':'nu', 'ね':'ne', 'の':'no', 'は':'ha', 'ひ':'hi', 'ふ':'fu', 'へ':'he', 'ほ':'ho',
   'ま':'ma', 'み':'mi', 'む':'mu', 'め':'me', 'も':'mo', 'や':'ya', 'ゆ':'yu', 'よ':'yo', 'ら':'ra', 'り':'ri', 'る':'ru', 'れ':'re', 'ろ':'ro',
-  'わ':'wa', 'を':'wo', 'ん':'n', 'ー': '-',
-  // Hiragana Dakuten/Combos
-  'が':'ga', 'ぎ':'gi', 'ぐ':'gu', 'げ':'ge', 'ご':'go', 'ざ':'za', 'じ':'ji', 'ず':'zu', 'ぜ':'ze', 'ぞ':'zo',
+  'わ':'wa', 'を':'wo', 'ん':'n', 'ー': '-', 'が':'ga', 'ぎ':'gi', 'ぐ':'gu', 'げ':'ge', 'ご':'go', 'ざ':'za', 'じ':'ji', 'ず':'zu', 'ぜ':'ze', 'ぞ':'zo',
   'だ':'da', 'ぢ':'ji', 'づ':'zu', 'で':'de', 'ど':'do', 'ば':'ba', 'び':'bi', 'ぶ':'bu', 'べ':'be', 'ぼ':'bo',
   'ぱ':'pa', 'ぴ':'pi', 'ぷ':'pu', 'ぺ':'pe', 'ぽ':'po', 'きゃ':'kya', 'きゅ':'kyu', 'きょ':'kyo', 'しゃ':'sha', 'しゅ':'shu', 'しょ':'sho',
-  // Katakana
   'ア':'a', 'イ':'i', 'ウ':'u', 'エ':'e', 'オ':'o', 'カ':'ka', 'キ':'ki', 'ク':'ku', 'ケ':'ke', 'コ':'ko',
   'サ':'sa', 'シ':'shi', 'ス':'su', 'セ':'se', 'ソ':'so', 'タ':'ta', 'チ':'chi', 'ツ':'tsu', 'テ':'te', 'ト':'to', 
   'ナ':'na', 'ニ':'ni', 'ヌ':'nu', 'ネ':'ne', 'ノ':'no', 'ハ':'ha', 'ヒ':'hi', 'フ':'fu', 'ヘ':'he', 'ホ':'ho', 
   'マ':'ma', 'ミ':'mi', 'ム':'mu', 'メ':'me', 'モ':'mo', 'ヤ':'ya', 'ユ':'yu', 'ヨ':'yo', 'ラ':'ra', 'リ':'ri', 'ル':'ru', 'レ':'re', 'ロ':'ro', 
-  'ワ':'wa', 'ヲ':'wo', 'ン':'n',
-  // Katakana Dakuten/Combos
-  'ガ':'ga', 'ギ':'gi', 'グ':'gu', 'ゲ':'ge', 'ゴ':'go', 'ザ':'za', 'ジ':'ji', 'ズ':'zu', 'ゼ':'ze', 'ゾ':'zo',
+  'ワ':'wa', 'ヲ':'wo', 'ン':'n', 'ガ':'ga', 'ギ':'gi', 'グ':'gu', 'ゲ':'ge', 'ゴ':'go', 'ザ':'za', 'ジ':'ji', 'ズ':'zu', 'ゼ':'ze', 'ゾ':'zo',
   'ダ':'da', 'ヂ':'ji', 'ヅ':'zu', 'デ':'de', 'ド':'do', 'バ':'ba', 'ビ':'bi', 'ブ':'bu', 'ベ':'be', 'ボ':'bo',
   'パ':'pa', 'ピ':'pi', 'プ':'pu', 'ペ':'pe', 'ポ':'po', 'キャ':'kya', 'キュ':'kyu', 'キョ':'kyo'
 };
 
 const dictionary = [
-  // --- HIRAGANA ---
   { word: 'あお', mean: 'Blue (ao)' }, { word: 'あい', mean: 'Love (ai)' }, { word: 'いいえ', mean: 'No (iie)' },
   { word: 'あか', mean: 'Red (aka)' }, { word: 'かき', mean: 'Persimmon (kaki)' }, { word: 'いく', mean: 'To go (iku)' },
   { word: 'すし', mean: 'Sushi (sushi)' }, { word: 'かさ', mean: 'Umbrella (kasa)' }, { word: 'あし', mean: 'Leg (ashi)' },
@@ -188,8 +164,6 @@ const dictionary = [
   { word: 'あそぶ', mean: 'To play (asobu)' }, { word: 'およぐ', mean: 'To swim (oyogu)' }, { word: 'まつ', mean: 'To wait (matsu)' },
   { word: 'わかる', mean: 'To understand (wakaru)' }, { word: 'はなす', mean: 'To speak (hanasu)' }, { word: 'きく', mean: 'To listen (kiku)' },
   { word: 'おきる', mean: 'To wake up (okiru)' }, { word: 'ねる', mean: 'To sleep (neru)' }, { word: 'みる', mean: 'To see/watch (miru)' },
-  
-  // --- KATAKANA ---
   { word: 'エア', mean: 'Air (ea)' }, { word: 'ケーキ', mean: 'Cake (keeki)' }, { word: 'ココア', mean: 'Cocoa (kokoa)' },
   { word: 'アイス', mean: 'Ice (aisu)' }, { word: 'テスト', mean: 'Test (tesuto)' }, { word: 'コーヒー', mean: 'Coffee (koohii)' },
   { word: 'スマホ', mean: 'Smartphone (sumaho)' }, { word: 'カメラ', mean: 'Camera (kamera)' }, { word: 'クラス', mean: 'Class (kurasu)' },
@@ -208,8 +182,6 @@ const dictionary = [
   { word: 'シャワー', mean: 'Shower (shawaa)' }, { word: 'エアコン', mean: 'Air Conditioner (eakon)' }, { word: 'ゲーム', mean: 'Game (geemu)' },
   { word: 'アニメ', mean: 'Anime (anime)' }, { word: 'カラオケ', mean: 'Karaoke (karaoke)' }, { word: 'スーパー', mean: 'Supermarket (suupaa)' },
   { word: 'デパート', mean: 'Department Store (depaato)' }, { word: 'コンビニ', mean: 'Convenience Store (konbini)' }, { word: 'カード', mean: 'Card (kaado)' },
-
-  // --- KANJI ---
   { word: '一', mean: 'One (ichi)' }, { word: '水', mean: 'Water (mizu)' }, { word: '火', mean: 'Fire (hi)' },
   { word: '山', mean: 'Mountain (yama)' }, { word: '人', mean: 'Person (hito)' }, { word: '上', mean: 'Up (ue)' },
   { word: '先生', mean: 'Teacher (sensei)' }, { word: '学生', mean: 'Student (gakusei)' }, { word: '行く', mean: 'To go (iku)' },
@@ -223,22 +195,17 @@ const dictionary = [
   { word: '会社', mean: 'Company (kaisha)' }, { word: '名前', mean: 'Name (namae)' }, { word: '友達', mean: 'Friend (tomodachi)' }
 ];
 
-// --- 5. NEW DATABASES (Reading & Sentences) ---
 const readingDb = [
   { jp: "こんにちは。私の名前は田中です。私は東京に住んでいます。", en: "Hello. My name is Tanaka. I live in Tokyo." },
   { jp: "今日はとてもいい天気ですね。公園を散歩しましょう。", en: "The weather is very nice today, isn't it? Let's take a walk in the park." },
   { jp: "日本の食べ物は美味しいです。特に寿司とラーメンが好きです。", en: "Japanese food is delicious. I especially like sushi and ramen." },
   { jp: "毎朝、七時に起きます。そして、コーヒーを飲みながら本を読みます。", en: "I wake up at 7 o'clock every morning. Then, I read a book while drinking coffee." },
   { jp: "週末は友達と映画を見に行きます。とても楽しみです！", en: "I'm going to watch a movie with my friends this weekend. I'm really looking forward to it!" },
-  { jp: "私の趣味は音楽を聞くことです。ジャズが一番好きです。", en: "My hobby is listening to music. I like jazz the best." },
+  { jp: "私の趣味は音楽を聞くことです。ジャズが一番好きです。", en: "My hobby is listening to music. I like jazz best." },
   { jp: "来年、日本へ旅行に行きたいです。富士山を見たいです。", en: "Next year, I want to travel to Japan. I want to see Mount Fuji." }
 ];
 
-let currentParagraphIndex = 0;
-
-   // --- UNLOCKABLE SENTENCE DATABASE (100 Daily Use Sentences) ---
 const sentenceDb = [
-    // --- HIRAGANA SENTENCES ---
     { sys: 'hiragana', level: 1, jp: "おはようございます。", en: "Good morning." },
     { sys: 'hiragana', level: 1, jp: "こんにちは。", en: "Hello / Good afternoon." },
     { sys: 'hiragana', level: 1, jp: "こんばんは。", en: "Good evening." },
@@ -274,8 +241,6 @@ const sentenceDb = [
     { sys: 'hiragana', level: 13, jp: "だいじょうぶですか？", en: "Are you okay?" },
     { sys: 'hiragana', level: 14, jp: "ほんとうですか？", en: "Really? / Is that true?" },
     { sys: 'hiragana', level: 15, jp: "きをつけてください。", en: "Please be careful." },
-
-    // --- KATAKANA SENTENCES ---
     { sys: 'katakana', level: 1, jp: "アメリカから来ました。", en: "I came from America." },
     { sys: 'katakana', level: 1, jp: "トイレはどこですか？", en: "Where is the toilet?" },
     { sys: 'katakana', level: 2, jp: "コーヒーをお願いします。", en: "Coffee, please." },
@@ -304,8 +269,6 @@ const sentenceDb = [
     { sys: 'katakana', level: 13, jp: "ジュースを飲みます。", en: "I drink juice." },
     { sys: 'katakana', level: 14, jp: "ニュースを見ます。", en: "I watch the news." },
     { sys: 'katakana', level: 14, jp: "スポーツをします。", en: "I play sports." },
-
-    // --- KANJI SENTENCES ---
     { sys: 'kanji', level: 1, jp: "一から十まで数えてください。", en: "Please count from 1 to 10." },
     { sys: 'kanji', level: 1, jp: "一人で行きます。", en: "I will go alone." },
     { sys: 'kanji', level: 2, jp: "今は何時ですか？", en: "What time is it now?" },
@@ -338,7 +301,9 @@ const sentenceDb = [
     { sys: 'kanji', level: 15, jp: "お金がありません。", en: "I have no money." }
 ];
 
-// --- 5. INITIALIZATION ---
+// ==========================================
+// --- 5. INITIALIZATION & CORE LOGIC ---
+// ==========================================
 window.onload = () => {
   const student = localStorage.getItem('nihongoStudent');
   if (!student) { window.location.href = 'index.html'; } else { renderCourseCards(); }
@@ -407,9 +372,13 @@ function loadCharacter() {
   if(ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
 }
 
+// ==========================================
+// --- 6. HIGH-VISIBILITY VOCABULARY TABLE ---
+// ==========================================
 function renderVocabulary() {
   const student = localStorage.getItem('nihongoStudent');
   let knownChars = [];
+  
   for (let sys in db) {
       const isSystemUnlocked = sys === 'hiragana' || localStorage.getItem(`${student}_sys_${sys === 'katakana' ? 'hiragana' : 'katakana'}_complete`) === 'true';
       if (isSystemUnlocked) {
@@ -418,17 +387,33 @@ function renderVocabulary() {
           });
       }
   }
+  
   const playableWords = dictionary.filter(entry => entry.word.split('').every(char => knownChars.includes(char)));
-  if(!vocabGrid) return; vocabGrid.innerHTML = '';
+  const vocabGrid = document.getElementById('vocab-grid');
+  if(!vocabGrid) return; 
+  vocabGrid.innerHTML = '';
+
+  if (playableWords.length === 0) {
+      vocabGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #aaa; background: #2a2a35; border-radius: 10px; border: 1px dashed #555;">Pass more levels to unlock your first words!</div>';
+      return;
+  }
+
   playableWords.forEach(entry => {
-    const div = document.createElement('div'); div.className = 'vocab-item';
-    div.innerHTML = `<button class="audio-btn" style="font-size:1.2rem;">🔊</button> <span class="vocab-jp" style="font-size:1.2rem;">${entry.word}</span> <span class="vocab-en" style="font-size:0.9rem;">${entry.mean}</span>`;
+    const div = document.createElement('div'); 
+    div.style.cssText = 'background: #2a2a35; padding: 15px; border-radius: 12px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);';
+    div.innerHTML = `
+        <button class="audio-btn" style="background: #3f51b5; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2rem; cursor: pointer; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">🔊</button>
+        <span style="font-size: 1.6rem; color: #fff; font-weight: bold; margin-bottom: 5px;">${entry.word}</span>
+        <span style="font-size: 1rem; color: #00d2ff; font-weight: bold;">${entry.mean}</span>
+    `;
     div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
     vocabGrid.appendChild(div);
   });
 }
 
-// --- 6. STUDY BUTTONS ---
+// ==========================================
+// --- 7. STUDY BUTTONS ---
+// ==========================================
 const playAudioBtn = document.getElementById('play-audio-btn');
 if(playAudioBtn) playAudioBtn.onclick = () => playAudio(activeCharUI.textContent.trim());
 
@@ -454,7 +439,9 @@ if(passLevelBtn) passLevelBtn.onclick = () => {
   }
 };
 
-// --- 7. QUIZ MODULE ---
+// ==========================================
+// --- 8. QUIZ MODULE ---
+// ==========================================
 const startCharBtn = document.getElementById('start-char-quiz-btn');
 if(startCharBtn) startCharBtn.onclick = () => { currentQuizMode = 'char'; startQuiz(); };
 
@@ -504,29 +491,142 @@ function loadNextQuestion() {
   });
 }
 
-// --- 8. READING / SENTENCES / LIBRARY / TYPING (Stubbed for stability) ---
-const btnIds = ['start-reading-btn', 'start-sentences-btn', 'start-library-btn', 'start-typing-btn'];
-const viewIds = ['view-reading', 'view-sentences', 'view-library', 'view-typing'];
-const quitIds = ['quit-reading-btn', 'quit-sentences-btn', 'quit-library-btn', 'quit-typing-btn'];
+// ==========================================
+// --- 9. READING MODULE ---
+// ==========================================
+let currentParagraphIndex = 0;
+const startReadingBtn = document.getElementById('start-reading-btn');
+const quitReadingBtn = document.getElementById('quit-reading-btn');
+if (startReadingBtn) startReadingBtn.onclick = () => { currentParagraphIndex = 0; hideAllViews(); if(viewReading) viewReading.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadParagraph(); };
+if (quitReadingBtn) quitReadingBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
 
-btnIds.forEach((id, i) => {
-    const btn = document.getElementById(id);
-    if(btn) btn.onclick = () => {
-        hideAllViews(); 
-        const view = document.getElementById(viewIds[i]);
-        if(view) view.classList.add('active');
-        if(navHomeBtn) navHomeBtn.classList.remove('hidden');
-    };
+function loadParagraph() {
+    const data = readingDb[currentParagraphIndex];
+    const jpUI = document.getElementById('reading-jp'); const enUI = document.getElementById('reading-en'); const tBtn = document.getElementById('toggle-translation-btn');
+    if(jpUI) jpUI.textContent = data.jp;
+    if(enUI) { enUI.textContent = data.en; enUI.classList.add('hidden'); }
+    if(tBtn) tBtn.textContent = "👁️ Translate";
+}
+
+const toggleTransBtn = document.getElementById('toggle-translation-btn');
+if (toggleTransBtn) toggleTransBtn.onclick = () => {
+    const enUI = document.getElementById('reading-en');
+    if(enUI) enUI.classList.toggle('hidden');
+    toggleTransBtn.textContent = enUI.classList.contains('hidden') ? "👁️ Translate" : "🙈 Hide";
+};
+
+const nextParaBtn = document.getElementById('next-paragraph-btn');
+if (nextParaBtn) nextParaBtn.onclick = () => {
+    currentParagraphIndex++;
+    if (currentParagraphIndex >= readingDb.length) { currentParagraphIndex = 0; alert("Finished!"); hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); } 
+    else { loadParagraph(); }
+};
+
+const readAudioBtn = document.getElementById('read-audio-btn');
+if (readAudioBtn) readAudioBtn.onclick = () => playAudio(readingDb[currentParagraphIndex].jp);
+
+// ==========================================
+// --- 10. SENTENCE BANK MODULE ---
+// ==========================================
+const startSentencesBtn = document.getElementById('start-sentences-btn');
+const quitSentencesBtn = document.getElementById('quit-sentences-btn');
+if (startSentencesBtn) startSentencesBtn.onclick = () => { hideAllViews(); if(viewSentences) viewSentences.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); renderSentences(); };
+if (quitSentencesBtn) quitSentencesBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+
+function renderSentences() {
+    const student = localStorage.getItem('nihongoStudent');
+    const listUI = document.getElementById('sentence-list');
+    if(!listUI) return;
+    listUI.innerHTML = '';
+    let unlockedCount = 0;
+
+    sentenceDb.forEach(item => {
+        let isUnlocked = false;
+        if (localStorage.getItem(`${student}_sys_${item.sys}_complete`) === 'true') isUnlocked = true;
+        else if (localStorage.getItem(`${student}_progress_${item.sys}_${item.level}`) === 'unlocked') isUnlocked = true;
+
+        if (isUnlocked) {
+            unlockedCount++;
+            const div = document.createElement('div');
+            div.style.cssText = 'background: #1a1a24; padding: 20px; border-radius: 12px; border-left: 4px solid #9c27b0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
+            div.innerHTML = `<div><div style="font-size: 1.4rem; color: #fff; font-weight: bold; margin-bottom: 5px;">${item.jp}</div><div style="font-size: 1rem; color: #aaa;">${item.en}</div></div><button class="audio-btn" style="font-size: 1.8rem; background: none; border: none; cursor: pointer;">🔊</button>`;
+            div.querySelector('.audio-btn').onclick = () => playAudio(item.jp);
+            listUI.appendChild(div);
+        }
+    });
+    if (unlockedCount === 0) listUI.innerHTML = `<div style="text-align: center; padding: 40px; background: #1a1a24; border-radius: 12px; border: 1px dashed #444;"><span style="font-size: 3rem; display: block; margin-bottom: 15px;">🔒</span><p style="color: #aaa; font-size: 1.1rem;">Your sentence vault is locked.</p></div>`;
+}
+
+// ==========================================
+// --- 11. THE LIBRARY MODULE ---
+// ==========================================
+const startLibraryBtn = document.getElementById('start-library-btn');
+const quitLibraryBtn = document.getElementById('quit-library-btn');
+const librarySearch = document.getElementById('library-search');
+
+if (startLibraryBtn) startLibraryBtn.onclick = () => { hideAllViews(); if(viewLibrary) viewLibrary.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); renderLibrary(""); };
+if (quitLibraryBtn) quitLibraryBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+if (librarySearch) librarySearch.addEventListener('input', (e) => renderLibrary(e.target.value.toLowerCase()));
+
+function renderLibrary(searchTerm) {
+    const results = document.getElementById('library-results'); if(!results) return;
+    results.innerHTML = '';
+    const filtered = dictionary.filter(entry => entry.mean.toLowerCase().includes(searchTerm) || entry.word.includes(searchTerm));
+    
+    filtered.forEach(entry => {
+        const div = document.createElement('div');
+        div.style.cssText = 'background: #1a1a24; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;';
+        div.innerHTML = `<div><span style="font-size: 1.5rem; color: white; font-weight: bold; margin-right: 15px;">${entry.word}</span><span style="color: #aaa;">${entry.mean}</span></div><button class="audio-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🔊</button>`;
+        div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
+        results.appendChild(div);
+    });
+}
+
+// ==========================================
+// --- 12. TYPING STUDIO MODULE ---
+// ==========================================
+const startTypingBtn = document.getElementById('start-typing-btn');
+const quitTypingBtn = document.getElementById('quit-typing-btn');
+let targetRomaji = ""; let currentTyped = "";
+
+if (startTypingBtn) startTypingBtn.onclick = () => { hideAllViews(); if(viewTyping) viewTyping.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.remove('hidden'); loadTypingWord(); };
+if (quitTypingBtn) quitTypingBtn.onclick = () => { hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); };
+
+function loadTypingWord() {
+    const randomEntry = dictionary[Math.floor(Math.random() * dictionary.length)];
+    const jpUI = document.getElementById('typing-jp'); const enUI = document.getElementById('typing-en');
+    if(jpUI) jpUI.textContent = randomEntry.word;
+    if(enUI) enUI.textContent = randomEntry.mean;
+    
+    const match = randomEntry.mean.match(/\(([^)]+)\)/);
+    targetRomaji = match ? match[1].toLowerCase().replace(/\s/g, '') : "";
+    currentTyped = ""; updateTypingDisplay();
+}
+
+function updateTypingDisplay() {
+    const disp = document.getElementById('typing-input-display'); if(disp) disp.textContent = currentTyped;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (!viewTyping || !viewTyping.classList.contains('active')) return;
+    if (e.key.length > 1 && e.key !== 'Backspace') return; 
+
+    if (e.key === 'Backspace') currentTyped = currentTyped.slice(0, -1);
+    else currentTyped += e.key.toLowerCase();
+    
+    updateTypingDisplay();
+
+    if (currentTyped === targetRomaji) {
+        const disp = document.getElementById('typing-input-display'); const jpUI = document.getElementById('typing-jp');
+        if(disp) disp.style.color = "#28a745"; 
+        if(jpUI) playAudio(jpUI.textContent);
+        setTimeout(() => { if(disp) disp.style.color = "#00d2ff"; loadTypingWord(); }, 500);
+    }
 });
 
-quitIds.forEach(id => {
-    const btn = document.getElementById(id);
-    if(btn) btn.onclick = () => {
-        hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden');
-    };
-});
-
-// --- 9. CANVAS DRAWING (TOUCH SAFE) ---
+// ==========================================
+// --- 13. CANVAS DRAWING (TOUCH SAFE) ---
+// ==========================================
 if(canvas && ctx) {
     ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';      
     canvas.addEventListener('mousedown', (e) => { isDrawing = true; draw(e); });

@@ -50,47 +50,59 @@ if (studyBackBtn) {
     };
 }
 
-// --- BATTLE-TESTED MOBILE AUDIO ENGINE ---
-// Initialize voices early for mobile WebViews
+// --- AUDIO ENGINE (MOBILE APP OPTIMIZED) ---
+
+// We create a global variable. WebViews aggressively delete temporary audio files,
+// so storing it globally forces the mobile app to keep the audio alive!
+let currentAppAudio = null;
+
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
 
 function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
   
-  // 1. Mobile WebViews (like Median) prefer standard HTML5 MP3 Audio.
-  // We try this first because the built-in Speech Engine is often bugged on Android WebViews.
-  try {
-      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
-      const audio = new Audio(audioUrl);
-      audio.playbackRate = isSlowMode ? 0.5 : 1.0;
-      
-      // Mobile browsers return a "Promise" when playing audio. 
-      // If the phone blocks it, we catch the error and use the fallback.
-      let playPromise = audio.play();
-      if (playPromise !== undefined) {
-          playPromise.catch(error => {
-              console.log("Audio Stream blocked by phone, trying fallback...", error);
-              fallbackSpeech(text, isSlowMode);
-          });
-      }
-  } catch(e) { 
-      fallbackSpeech(text, isSlowMode); 
-  }
-}
-
-// 2. The Fallback: If the MP3 fails, force the native phone Speech Engine.
-function fallbackSpeech(text, isSlowMode) {
+  // Attempt 1: Native Phone Text-to-Speech (Faster, but sometimes missing on older phones)
   if ('speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function') {
-      window.speechSynthesis.cancel(); // Clear any stuck audio
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
       utterance.rate = isSlowMode ? 0.4 : 0.8;
       
       const voices = window.speechSynthesis.getVoices();
       const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-      if (jaVoice) { utterance.voice = jaVoice; }
       
-      window.speechSynthesis.speak(utterance);
+      if (jaVoice) { 
+          utterance.voice = jaVoice; 
+          window.speechSynthesis.speak(utterance); 
+          return; // If native voice works, stop here.
+      }
+  }
+  
+  // Attempt 2: HTML5 Audio Stream (The fallback for when Native TTS fails)
+  try {
+      // Stop any currently playing audio so they don't overlap
+      if (currentAppAudio) {
+          currentAppAudio.pause();
+          currentAppAudio.currentTime = 0;
+      }
+
+      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
+      currentAppAudio = new Audio(audioUrl);
+      currentAppAudio.playbackRate = isSlowMode ? 0.5 : 1.0;
+      
+      // MOBILE FIX: WebViews require Audio to be played as a "Promise"
+      let playPromise = currentAppAudio.play();
+      
+      if (playPromise !== undefined) {
+          playPromise.then(() => {
+              // Audio is playing successfully
+          }).catch(error => {
+              console.log("Median App blocked audio playback:", error);
+              // In some Median setups, you might need user interaction first
+          });
+      }
+  } catch(e) { 
+      console.log("Audio stream completely failed.", e); 
   }
 }
 

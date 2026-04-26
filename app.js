@@ -50,18 +50,32 @@ if (studyBackBtn) {
     };
 }
 
-// --- AUDIO ENGINE (MOBILE APP OPTIMIZED) ---
+// ==========================================
+// --- MOBILE AUDIO ENGINE (WEBVIEW SAFE) ---
+// ==========================================
+let currentAppAudio = null; 
+let audioUnlocked = false;
 
-// We create a global variable. WebViews aggressively delete temporary audio files,
-// so storing it globally forces the mobile app to keep the audio alive!
-let currentAppAudio = null;
+// The "Invisible First Tap" Unlocker for Mobile WebViews
+document.addEventListener('touchstart', function() {
+    if (!audioUnlocked) {
+        // Play a silent base64 audio byte to unlock the HTML5 engine
+        const silentAudio = new Audio('data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
+        let playPromise = silentAudio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => { console.log("Audio Unlocked"); }).catch(e => { /* Ignore rejection */ });
+        }
+        audioUnlocked = true;
+    }
+}, { once: true });
 
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
 
+// The Upgraded Audio Player
 function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
   
-  // Attempt 1: Native Phone Text-to-Speech (Faster, but sometimes missing on older phones)
+  // Attempt 1: Native Phone Text-to-Speech
   if ('speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function') {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -70,42 +84,31 @@ function playAudio(text) {
       
       const voices = window.speechSynthesis.getVoices();
       const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-      
       if (jaVoice) { 
           utterance.voice = jaVoice; 
           window.speechSynthesis.speak(utterance); 
-          return; // If native voice works, stop here.
+          return; 
       }
   }
   
-  // Attempt 2: HTML5 Audio Stream (The fallback for when Native TTS fails)
+  // Attempt 2: HTML5 Audio Stream (With Promise Catching for Mobile WebViews)
   try {
-      // Stop any currently playing audio so they don't overlap
-      if (currentAppAudio) {
-          currentAppAudio.pause();
-          currentAppAudio.currentTime = 0;
-      }
-
+      if (currentAppAudio) { currentAppAudio.pause(); currentAppAudio.currentTime = 0; }
+      
       const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
       currentAppAudio = new Audio(audioUrl);
       currentAppAudio.playbackRate = isSlowMode ? 0.5 : 1.0;
       
-      // MOBILE FIX: WebViews require Audio to be played as a "Promise"
       let playPromise = currentAppAudio.play();
-      
       if (playPromise !== undefined) {
           playPromise.then(() => {
               // Audio is playing successfully
           }).catch(error => {
-              console.log("Median App blocked audio playback:", error);
-              // In some Median setups, you might need user interaction first
+              console.log("App blocked audio playback:", error);
           });
       }
-  } catch(e) { 
-      console.log("Audio stream completely failed.", e); 
-  }
+  } catch(e) { console.log("Audio stream failed."); }
 }
-
 // ==========================================
 // --- 3. STATE & DATA ---
 // ==========================================

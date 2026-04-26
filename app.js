@@ -50,33 +50,48 @@ if (studyBackBtn) {
     };
 }
 
-// ==========================================
-// --- 2. HYBRID AUDIO ENGINE ---
-// ==========================================
+// --- BATTLE-TESTED MOBILE AUDIO ENGINE ---
+// Initialize voices early for mobile WebViews
 if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
 
 function playAudio(text) {
   const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
+  
+  // 1. Mobile WebViews (like Median) prefer standard HTML5 MP3 Audio.
+  // We try this first because the built-in Speech Engine is often bugged on Android WebViews.
+  try {
+      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
+      const audio = new Audio(audioUrl);
+      audio.playbackRate = isSlowMode ? 0.5 : 1.0;
+      
+      // Mobile browsers return a "Promise" when playing audio. 
+      // If the phone blocks it, we catch the error and use the fallback.
+      let playPromise = audio.play();
+      if (playPromise !== undefined) {
+          playPromise.catch(error => {
+              console.log("Audio Stream blocked by phone, trying fallback...", error);
+              fallbackSpeech(text, isSlowMode);
+          });
+      }
+  } catch(e) { 
+      fallbackSpeech(text, isSlowMode); 
+  }
+}
+
+// 2. The Fallback: If the MP3 fails, force the native phone Speech Engine.
+function fallbackSpeech(text, isSlowMode) {
   if ('speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function') {
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel(); // Clear any stuck audio
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
       utterance.rate = isSlowMode ? 0.4 : 0.8;
       
       const voices = window.speechSynthesis.getVoices();
       const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
-      if (jaVoice) {
-          utterance.voice = jaVoice;
-          window.speechSynthesis.speak(utterance);
-          return; 
-      }
+      if (jaVoice) { utterance.voice = jaVoice; }
+      
+      window.speechSynthesis.speak(utterance);
   }
-  try {
-      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
-      const audio = new Audio(audioUrl);
-      audio.playbackRate = isSlowMode ? 0.5 : 1.0;
-      audio.play();
-  } catch(e) { console.log("Audio stream failed."); }
 }
 
 // ==========================================

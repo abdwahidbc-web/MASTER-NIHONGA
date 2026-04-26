@@ -1,5 +1,5 @@
 // ==========================================
-// NIHONGO MASTER | MOBILE CRASH-PROOF V5 (EXPANDED DATA)
+// NIHONGO MASTER | SINGLE-SCREEN LAYOUT V6
 // ==========================================
 
 const viewHome = document.getElementById('view-home');
@@ -13,11 +13,15 @@ const viewTyping = document.getElementById('view-typing');
 
 const navHomeBtn = document.getElementById('nav-home-btn');
 const navLevelsBtn = document.getElementById('nav-levels-btn');
+const mainNav = document.getElementById('main-nav');
 
 function hideAllViews() {
   [viewHome, viewLevels, viewStudy, viewQuiz, viewReading, viewSentences, viewLibrary, viewTyping].forEach(v => {
     if(v) v.classList.remove('active');
   });
+  // Always restore body scroll and main nav by default
+  document.body.classList.remove('study-active');
+  if(mainNav) mainNav.style.display = 'flex';
 }
 
 window.logout = function() {
@@ -37,19 +41,44 @@ if(navHomeBtn) {
 
 if(navLevelsBtn) navLevelsBtn.onclick = () => openSystem(currentSystem);
 
+// The New "Only Keep Back Button" Logic for Study Page
+const studyBackBtn = document.getElementById('study-back-btn');
+if (studyBackBtn) {
+    studyBackBtn.onclick = () => {
+        hideAllViews();
+        if(viewLevels) viewLevels.classList.add('active');
+        if(navHomeBtn) navHomeBtn.classList.remove('hidden');
+        if(navLevelsBtn) navLevelsBtn.classList.add('hidden');
+    };
+}
+
 // ==========================================
-// --- 2. BULLETPROOF MOBILE AUDIO ---
+// --- 2. HYBRID AUDIO ENGINE ---
 // ==========================================
+if ('speechSynthesis' in window) { window.speechSynthesis.getVoices(); }
+
 function playAudio(text) {
+  const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
+  if ('speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function') {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = isSlowMode ? 0.4 : 0.8;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const jaVoice = voices.find(v => v.lang.toLowerCase().includes('ja'));
+      if (jaVoice) {
+          utterance.voice = jaVoice;
+          window.speechSynthesis.speak(utterance);
+          return; 
+      }
+  }
   try {
       const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
       const audio = new Audio(audioUrl);
-      const isSlowMode = document.getElementById('slow-audio-toggle')?.checked;
-      audio.playbackRate = isSlowMode ? 0.5 : 1.0; 
+      audio.playbackRate = isSlowMode ? 0.5 : 1.0;
       audio.play();
-  } catch(e) {
-      console.log("Audio stream failed to play.");
-  }
+  } catch(e) { console.log("Audio stream failed."); }
 }
 
 // ==========================================
@@ -360,8 +389,11 @@ function openStudy(levelIndex) {
   currentLevelIndex = levelIndex; currentCharIndex = 0;
   hideAllViews();
   if(viewStudy) viewStudy.classList.add('active'); 
-  if(navHomeBtn) navHomeBtn.classList.remove('hidden');
-  if(navLevelsBtn) navLevelsBtn.classList.remove('hidden');
+  
+  // LOCK SCREEN AND HIDE MAIN NAV FOR COMPACT LAYOUT
+  document.body.classList.add('study-active');
+  if(mainNav) mainNav.style.display = 'none';
+  
   const title = document.getElementById('study-level-title');
   if(title) title.textContent = db[currentSystem][levelIndex].title;
   loadCharacter(); renderVocabulary();
@@ -373,7 +405,7 @@ function loadCharacter() {
 }
 
 // ==========================================
-// --- 6. HIGH-VISIBILITY VOCABULARY TABLE ---
+// --- 6. COMPACT VOCABULARY CARDS ---
 // ==========================================
 function renderVocabulary() {
   const student = localStorage.getItem('nihongoStudent');
@@ -394,17 +426,20 @@ function renderVocabulary() {
   vocabGrid.innerHTML = '';
 
   if (playableWords.length === 0) {
-      vocabGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #aaa; background: #2a2a35; border-radius: 10px; border: 1px dashed #555;">Pass more levels to unlock your first words!</div>';
+      vocabGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 10px; color: #aaa;">Pass more levels to unlock words!</div>';
       return;
   }
 
+  // Create Compact Word Cards
   playableWords.forEach(entry => {
     const div = document.createElement('div'); 
-    div.style.cssText = 'background: #2a2a35; padding: 15px; border-radius: 12px; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);';
+    div.style.cssText = 'background: #2a2a35; padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px;';
     div.innerHTML = `
-        <button class="audio-btn" style="background: #3f51b5; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2rem; cursor: pointer; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">🔊</button>
-        <span style="font-size: 1.6rem; color: #fff; font-weight: bold; margin-bottom: 5px;">${entry.word}</span>
-        <span style="font-size: 1rem; color: #00d2ff; font-weight: bold;">${entry.mean}</span>
+        <button class="audio-btn" style="background: #3f51b5; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; flex-shrink: 0; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center;">🔊</button>
+        <div style="display: flex; flex-direction: column; overflow: hidden;">
+            <span style="font-size: 1rem; color: #fff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${entry.word}</span>
+            <span style="font-size: 0.75rem; color: #00d2ff; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${entry.mean}</span>
+        </div>
     `;
     div.querySelector('.audio-btn').onclick = () => playAudio(entry.word);
     vocabGrid.appendChild(div);
@@ -412,7 +447,7 @@ function renderVocabulary() {
 }
 
 // ==========================================
-// --- 7. STUDY BUTTONS ---
+// --- 7. STUDY BUTTONS & ANIMATED GUIDE ---
 // ==========================================
 const playAudioBtn = document.getElementById('play-audio-btn');
 if(playAudioBtn) playAudioBtn.onclick = () => playAudio(activeCharUI.textContent.trim());
@@ -437,6 +472,47 @@ if(passLevelBtn) passLevelBtn.onclick = () => {
     alert(`🏆 Course Mastered!`);
     hideAllViews(); if(viewHome) viewHome.classList.add('active'); if(navHomeBtn) navHomeBtn.classList.add('hidden'); renderCourseCards();
   }
+};
+
+// GUIDE BUTTON INJECTION
+if (!document.getElementById('guide-css')) {
+    const style = document.createElement('style');
+    style.id = 'guide-css';
+    style.innerHTML = `
+        @keyframes drawStroke { to { stroke-dashoffset: 0; } }
+        .enlarged-guide svg { width: 100px; height: 100px; }
+        .enlarged-guide path { fill: none; stroke: #ff3366; stroke-width: 4; stroke-linecap: round; }
+        .enlarged-guide text { display: none; }
+    `;
+    document.head.appendChild(style);
+}
+
+const showGuideBtn = document.getElementById('show-guide-btn');
+if(showGuideBtn) showGuideBtn.onclick = async () => {
+  const char = activeCharUI.textContent.trim();
+  if (char.includes('<svg') || activeCharUI.innerHTML.includes('<svg')) return; 
+
+  const hex = char.charCodeAt(0).toString(16).padStart(5, '0');
+  try {
+    const res = await fetch(`https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${hex}.svg`);
+    if (!res.ok) throw new Error("Not found");
+    const svg = await res.text();
+    
+    activeCharUI.innerHTML = svg.substring(svg.indexOf('<svg'));
+    activeCharUI.classList.add('enlarged-guide');
+    activeCharUI.onclick = () => { 
+        activeCharUI.classList.remove('enlarged-guide'); 
+        activeCharUI.innerHTML = char; 
+        activeCharUI.onclick = null; 
+    };
+
+    activeCharUI.querySelectorAll('path').forEach((p, i) => {
+      const l = p.getTotalLength(); 
+      p.style.strokeDasharray = l; 
+      p.style.strokeDashoffset = l;
+      p.style.animation = `drawStroke 1s forwards ${i * 1.1}s`;
+    });
+  } catch (e) { alert("Guide currently unavailable for this character."); }
 };
 
 // ==========================================

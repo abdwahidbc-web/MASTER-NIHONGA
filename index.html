@@ -2,41 +2,125 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Nihongo Master | Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nihongo Master | Portal</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
-<body style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #1a1a24;">
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #121212;">
 
-  <div style="background: #2a2a35; padding: 40px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-    <h1 style="color: #00d2ff; margin-bottom: 10px;">日本語 Master</h1>
-    <p id="auth-subtitle" style="color: #aaa; margin-bottom: 30px;">Register to begin your journey</p>
+  <div id="login-container" style="background: #1a1a24; border: 2px solid #333; border-radius: 20px; padding: 40px 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease;">
     
-    <div id="register-section">
-      <input type="text" id="reg-username" placeholder="Choose a Username" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
-      <input type="email" id="reg-email" placeholder="Enter your Email" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
-      <input type="password" id="reg-password" placeholder="Choose a Password" style="width: 100%; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
-      <button id="register-btn" class="primary-btn" style="width: 100%;">Enter Academy</button>
-      
-      <p style="margin-top: 20px; color: #aaa; font-size: 0.9rem;">
-        Already a student? <span id="show-login" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Log in here</span>
-      </p>
+    <h1 style="color: #00d2ff; font-size: 2.5rem; margin-bottom: 10px;">日本語 Master</h1>
+    <h3 style="color: #fff; margin-bottom: 25px; font-weight: normal;">Log in to continue your training</h3>
+
+    <input type="email" id="login-email" placeholder="Enter your Email" class="auth-input">
+    <input type="password" id="login-password" placeholder="Enter your Password" class="auth-input">
+
+    <div id="login-error-msg" style="color: #ff3366; margin-bottom: 15px; font-weight: bold; min-height: 20px;"></div>
+
+    <button class="auth-btn" onclick="loginFunction()">Welcome Back</button>
+
+    <div style="margin-top: 25px;">
+      <span style="color: #aaa;">Need an account?</span> 
+      <a href="#" onclick="toggleAuthMode('register')" class="auth-link">Register here</a>
     </div>
 
-    <div id="login-section" class="hidden">
-      <input type="email" id="login-email" placeholder="Enter your Email" style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
-      <input type="password" id="login-password" placeholder="Enter your Password" style="width: 100%; padding: 15px; margin-bottom: 25px; border-radius: 8px; border: none; font-size: 1rem; box-sizing: border-box;">
-      <button id="login-btn" class="primary-btn" style="width: 100%; background: #ff3366; color: white;">Welcome Back</button>
-      
-      <p style="margin-top: 20px; color: #aaa; font-size: 0.9rem;">
-        Need an account? <span id="show-register" style="color: #00d2ff; cursor: pointer; font-weight: bold;">Register here</span>
-      </p>
-    <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 15px;">
-      <a href="admin.html" style="color: #555; text-decoration: none; font-size: 0.8rem; transition: 0.3s;" onmouseover="this.style.color='#00d2ff'" onmouseout="this.style.color='#555'">
-        🔒 Admin Portal
-      </a>
+    <div style="margin-top: 15px;">
+      <a href="admin.html" style="color: #555; text-decoration: none; font-size: 0.8rem; transition: color 0.2s;">🔒 Admin Portal</a>
+    </div>
+  </div>
+
+  <div id="register-container" class="hidden" style="background: #1a1a24; border: 2px solid #333; border-radius: 20px; padding: 40px 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease;">
+    
+    <h1 style="color: #00d2ff; font-size: 2.5rem; margin-bottom: 10px;">日本語 Master</h1>
+    <h3 style="color: #fff; margin-bottom: 25px; font-weight: normal;">Register to begin your journey</h3>
+
+    <input type="text" id="reg-username" placeholder="Choose a Username" class="auth-input">
+    <input type="email" id="reg-email" placeholder="Enter your Email" class="auth-input">
+    <input type="password" id="reg-password" placeholder="Create a Password" class="auth-input">
+    <input type="password" id="reg-confirm" placeholder="Confirm Password" class="auth-input">
+
+    <div id="reg-error-msg" style="color: #ff3366; margin-bottom: 15px; font-weight: bold; min-height: 20px;"></div>
+
+    <button class="auth-btn" onclick="registerFunction()">Begin Journey</button>
+
+    <div style="margin-top: 25px;">
+      <span style="color: #aaa;">Already a student?</span> 
+      <a href="#" onclick="toggleAuthMode('login')" class="auth-link">Welcome back</a>
     </div>
 
-  </div> <script type="module" src="auth.js"></script>
+    <div style="margin-top: 15px;">
+      <a href="admin.html" style="color: #555; text-decoration: none; font-size: 0.8rem; transition: color 0.2s;">🔒 Admin Portal</a>
+    </div>
+  </div>
+
+  <script>
+    // --- THE INSTANT SWAP ENGINE ---
+    function toggleAuthMode(mode) {
+      const loginBox = document.getElementById('login-container');
+      const regBox = document.getElementById('register-container');
+      
+      // Clear any old error messages when flipping pages
+      document.getElementById('login-error-msg').textContent = '';
+      document.getElementById('reg-error-msg').textContent = '';
+
+      if (mode === 'register') {
+        loginBox.classList.add('hidden');
+        regBox.classList.remove('hidden');
+      } else {
+        regBox.classList.add('hidden');
+        loginBox.classList.remove('hidden');
+      }
+    }
+
+    // --- LOGIN LOGIC ---
+    function loginFunction() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorMsg = document.getElementById('login-error-msg');
+
+      if (email.trim() === '' || password.trim() === '') {
+        errorMsg.textContent = "Please enter your email and password.";
+        return;
+      }
+      
+      const username = email.split('@')[0];
+      localStorage.setItem('nihongoStudent', username);
+      window.location.href = 'courses.html';
+    }
+
+    // --- REGISTER LOGIC ---
+    function registerFunction() {
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pass1 = document.getElementById('reg-password').value;
+      const pass2 = document.getElementById('reg-confirm').value;
+      const errorMsg = document.getElementById('reg-error-msg');
+
+      if (!username || !email || !pass1) {
+        errorMsg.textContent = "Please fill out all fields.";
+        return;
+      }
+
+      if (pass1 !== pass2) {
+        errorMsg.textContent = "Passwords do not match!";
+        return;
+      }
+
+      let users = JSON.parse(localStorage.getItem('registeredUsers')) || [];
+      
+      if (users.find(u => u.username === username)) {
+         errorMsg.textContent = "Username is already taken!";
+         return;
+      }
+
+      users.push({ username: username, email: email, role: 'student' });
+      localStorage.setItem('registeredUsers', JSON.stringify(users));
+
+      localStorage.setItem('nihongoStudent', username);
+      window.location.href = 'courses.html';
+    }
+  </script>
 </body>
 </html>

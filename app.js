@@ -1,5 +1,5 @@
 // ==========================================
-// NIHONGO MASTER | SINGLE-SCREEN LAYOUT V6
+// NIHONGO MASTER | POPUP PRACTICE MODAL V7
 // ==========================================
 
 const viewHome = document.getElementById('view-home');
@@ -19,7 +19,6 @@ function hideAllViews() {
   [viewHome, viewLevels, viewStudy, viewQuiz, viewReading, viewSentences, viewLibrary, viewTyping].forEach(v => {
     if(v) v.classList.remove('active');
   });
-  // Always restore body scroll and main nav by default
   document.body.classList.remove('study-active');
   if(mainNav) mainNav.style.display = 'flex';
 }
@@ -41,7 +40,6 @@ if(navHomeBtn) {
 
 if(navLevelsBtn) navLevelsBtn.onclick = () => openSystem(currentSystem);
 
-// The New "Only Keep Back Button" Logic for Study Page
 const studyBackBtn = document.getElementById('study-back-btn');
 if (studyBackBtn) {
     studyBackBtn.onclick = () => {
@@ -82,20 +80,14 @@ function playAudio(text) {
 }
 
 // ==========================================
-// --- 3. STATE MANAGEMENT ---
+// --- 3. STATE & DATA ---
 // ==========================================
 let currentSystem = ''; let currentLevelIndex = 0; let currentCharIndex = 0;
 let quizPool = []; let currentQuestion = 0; let score = 0; let correctAnswer = null; let currentQuizMode = 'char';
 
 const activeCharUI = document.getElementById('active-char');
 const vocabGrid = document.getElementById('vocab-grid');
-const canvas = document.getElementById('writing-canvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
-let isDrawing = false;
 
-// ==========================================
-// --- 4. THE MASSIVE DATABASE ---
-// ==========================================
 const db = {
   hiragana: [
     { id: 'h1', title: 'Level 1: A-Row', chars: ['あ', 'い', 'う', 'え', 'お'], unlocked: true },
@@ -165,7 +157,23 @@ const characterMap = {
   'ダ':'da', 'ヂ':'ji', 'ヅ':'zu', 'デ':'de', 'ド':'do', 'バ':'ba', 'ビ':'bi', 'ブ':'bu', 'ベ':'be', 'ボ':'bo',
   'パ':'pa', 'ピ':'pi', 'プ':'pu', 'ペ':'pe', 'ポ':'po', 'キャ':'kya', 'キュ':'kyu', 'キョ':'kyo'
 };
-
+// --- NEW KANJI MEANINGS DICTIONARY ---
+const kanjiMeanings = {
+  '一': 'One (ichi)', '二': 'Two (ni)', '三': 'Three (san)', '四': 'Four (yon/shi)', '五': 'Five (go)', '六': 'Six (roku)', '七': 'Seven (nana/shichi)', '八': 'Eight (hachi)', '九': 'Nine (kyuu)', '十': 'Ten (juu)',
+  '日': 'Day/Sun (nichi)', '月': 'Month/Moon (tsuki)', '火': 'Fire (hi)', '水': 'Water (mizu)', '木': 'Tree (ki)', '金': 'Gold/Money (kane)', '土': 'Earth/Soil (tsuchi)',
+  '山': 'Mountain (yama)', '川': 'River (kawa)', '田': 'Rice Field (ta)', '石': 'Stone (ishi)', '花': 'Flower (hana)', '海': 'Sea (umi)', '空': 'Sky (sora)',
+  '人': 'Person (hito)', '目': 'Eye (me)', '口': 'Mouth (kuchi)', '耳': 'Ear (mimi)', '手': 'Hand (te)', '足': 'Foot/Leg (ashi)', '心': 'Heart (kokoro)',
+  '上': 'Up/Above (ue)', '下': 'Down/Below (shita)', '左': 'Left (hidari)', '右': 'Right (migi)', '中': 'Inside/Middle (naka)', '外': 'Outside (soto)', '前': 'Before/Front (mae)', '後': 'After/Behind (ato)',
+  '今': 'Now (ima)', '年': 'Year (toshi)', '時': 'Time/Hour (toki/ji)', '間': 'Interval/Between (aida)', '半': 'Half (han)', '分': 'Minute/Part (fun)', '午': 'Noon (go)',
+  '学': 'Study (gaku)', '生': 'Life/Birth (sei)', '先': 'Previous/Ahead (saki)', '校': 'School (kou)', '本': 'Book (hon)', '字': 'Character/Letter (ji)', '文': 'Sentence/Literature (bun)',
+  '行': 'To go (iku)', '来': 'To come (kuru)', '見': 'To see (miru)', '食': 'To eat (taberu)', '飲': 'To drink (nomu)', '立': 'To stand (tatsu)', '休': 'To rest (yasumu)',
+  '大': 'Big (ookii)', '小': 'Small (chiisai)', '高': 'High/Expensive (takai)', '安': 'Cheap/Safe (yasui)', '新': 'New (atarashii)', '古': 'Old (furui)', '多': 'Many (ooi)', '少': 'Few (sukunai)',
+  '白': 'White (shiro)', '黒': 'Black (kuro)', '赤': 'Red (aka)', '青': 'Blue (ao)', '円': 'Yen/Circle (en)', '形': 'Shape (katachi)',
+  '父': 'Father (chichi)', '母': 'Mother (haha)', '兄': 'Older Brother (ani)', '弟': 'Younger Brother (otouto)', '姉': 'Older Sister (ane)', '妹': 'Younger Sister (imouto)', '友': 'Friend (tomo)',
+  '雨': 'Rain (ame)', '雪': 'Snow (yuki)', '風': 'Wind (kaze)', '晴': 'Clear/Sunny (hare)', '雲': 'Cloud (kumo)', '春': 'Spring (haru)', '夏': 'Summer (natsu)', '秋': 'Autumn (aki)', '冬': 'Winter (fuyu)',
+  '国': 'Country (kuni)', '町': 'Town (machi)', '店': 'Shop (mise)', '駅': 'Station (eki)', '道': 'Road (michi)', '社': 'Company (sha)', '家': 'House (ie)',
+  '車': 'Car (kuruma)', '電': 'Electricity (den)', '気': 'Spirit/Mind (ki)', '語': 'Language (go)', '名': 'Name (na)', '紙': 'Paper (kami)'
+};
 const dictionary = [
   { word: 'あお', mean: 'Blue (ao)' }, { word: 'あい', mean: 'Love (ai)' }, { word: 'いいえ', mean: 'No (iie)' },
   { word: 'あか', mean: 'Red (aka)' }, { word: 'かき', mean: 'Persimmon (kaki)' }, { word: 'いく', mean: 'To go (iku)' },
@@ -389,8 +397,6 @@ function openStudy(levelIndex) {
   currentLevelIndex = levelIndex; currentCharIndex = 0;
   hideAllViews();
   if(viewStudy) viewStudy.classList.add('active'); 
-  
-  // LOCK SCREEN AND HIDE MAIN NAV FOR COMPACT LAYOUT
   document.body.classList.add('study-active');
   if(mainNav) mainNav.style.display = 'none';
   
@@ -400,12 +406,42 @@ function openStudy(levelIndex) {
 }
 
 function loadCharacter() {
-  if(activeCharUI) { activeCharUI.textContent = db[currentSystem][currentLevelIndex].chars[currentCharIndex]; activeCharUI.classList.remove('enlarged-guide'); }
+  const char = db[currentSystem][currentLevelIndex].chars[currentCharIndex];
+  
+  // --- SMART SIZING LOGIC ---
+  // If the character string is longer than 1 (like キャ), shrink the font so it fits!
+  const isCombo = char.length > 1;
+  const mainFontSize = isCombo ? '4rem' : '6rem';
+  const modalFontSize = isCombo ? '3.5rem' : '5.5rem';
+
+  if(activeCharUI) { 
+      activeCharUI.textContent = char; 
+      activeCharUI.style.fontSize = mainFontSize;
+      activeCharUI.style.whiteSpace = 'nowrap'; // Forces them to stay side-by-side
+  }
+  
+  // Set the proper meaning or Romaji
+  const displayMeaning = currentSystem === 'kanji' ? (kanjiMeanings[char] || "Kanji") : (characterMap[char] || char);
+  
+  const meaningUI = document.getElementById('active-char-meaning');
+  if(meaningUI) { meaningUI.textContent = displayMeaning; }
+
+  const modalGuideChar = document.getElementById('modal-guide-char');
+  if(modalGuideChar) { 
+      modalGuideChar.textContent = char; 
+      modalGuideChar.classList.remove('enlarged-guide'); 
+      modalGuideChar.style.fontSize = modalFontSize;
+      modalGuideChar.style.whiteSpace = 'nowrap'; // Forces them to stay side-by-side
+  }
+  
+  const modalMeaningUI = document.getElementById('modal-char-meaning');
+  if(modalMeaningUI) { modalMeaningUI.textContent = displayMeaning; }
+
   if(ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
 }
 
 // ==========================================
-// --- 6. COMPACT VOCABULARY CARDS ---
+// --- 6. SMART FILTERING VOCABULARY ---
 // ==========================================
 function renderVocabulary() {
   const student = localStorage.getItem('nihongoStudent');
@@ -420,7 +456,21 @@ function renderVocabulary() {
       }
   }
   
-  const playableWords = dictionary.filter(entry => entry.word.split('').every(char => knownChars.includes(char)));
+  // First, find all words the user can spell
+  let playableWords = dictionary.filter(entry => entry.word.split('').every(char => knownChars.includes(char)));
+  
+  // --- THE SMART FILTER ---
+  // If in Kanji mode, ONLY show words that contain Kanji characters!
+  // If in Katakana mode, ONLY show Katakana words!
+  // If in Hiragana mode, ONLY show pure Hiragana words!
+  if (currentSystem === 'kanji') {
+      playableWords = playableWords.filter(entry => /[\u4E00-\u9FAF]/.test(entry.word));
+  } else if (currentSystem === 'katakana') {
+      playableWords = playableWords.filter(entry => /[\u30A0-\u30FF]/.test(entry.word));
+  } else if (currentSystem === 'hiragana') {
+      playableWords = playableWords.filter(entry => !/[\u4E00-\u9FAF]/.test(entry.word) && !/[\u30A0-\u30FF]/.test(entry.word));
+  }
+
   const vocabGrid = document.getElementById('vocab-grid');
   if(!vocabGrid) return; 
   vocabGrid.innerHTML = '';
@@ -430,7 +480,6 @@ function renderVocabulary() {
       return;
   }
 
-  // Create Compact Word Cards
   playableWords.forEach(entry => {
     const div = document.createElement('div'); 
     div.style.cssText = 'background: #2a2a35; padding: 8px; border-radius: 8px; display: flex; align-items: center; gap: 8px;';
@@ -447,13 +496,10 @@ function renderVocabulary() {
 }
 
 // ==========================================
-// --- 7. STUDY BUTTONS & ANIMATED GUIDE ---
+// --- 6. POPUP MODAL & STUDY CONTROLS ---
 // ==========================================
 const playAudioBtn = document.getElementById('play-audio-btn');
 if(playAudioBtn) playAudioBtn.onclick = () => playAudio(activeCharUI.textContent.trim());
-
-const clearCanvasBtn = document.getElementById('clear-canvas-btn');
-if(clearCanvasBtn) clearCanvasBtn.onclick = () => { if(ctx){ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); } };
 
 const nextCharBtn = document.getElementById('next-char-btn');
 if(nextCharBtn) nextCharBtn.onclick = () => {
@@ -474,23 +520,62 @@ if(passLevelBtn) passLevelBtn.onclick = () => {
   }
 };
 
-// GUIDE BUTTON INJECTION
+// --- POPUP MODAL LOGIC ---
+const practiceModal = document.getElementById('practice-modal');
+const openModalBtn = document.getElementById('open-practice-modal-btn');
+const closeModalBtn = document.getElementById('modal-close-btn');
+const modalReplayBtn = document.getElementById('modal-replay-btn');
+const modalClearBtn = document.getElementById('modal-clear-btn');
+const modalGuideChar = document.getElementById('modal-guide-char');
+const canvas = document.getElementById('writing-canvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
+let isDrawing = false;
+
+// Inject CSS for the guide animation
 if (!document.getElementById('guide-css')) {
     const style = document.createElement('style');
     style.id = 'guide-css';
     style.innerHTML = `
         @keyframes drawStroke { to { stroke-dashoffset: 0; } }
-        .enlarged-guide svg { width: 100px; height: 100px; }
+        /* Increased SVG size to match the new 150px box */
+        .enlarged-guide svg { width: 140px; height: 140px; } 
         .enlarged-guide path { fill: none; stroke: #ff3366; stroke-width: 4; stroke-linecap: round; }
         .enlarged-guide text { display: none; }
     `;
     document.head.appendChild(style);
 }
+// Open Modal and Start Animation
+if(openModalBtn) {
+    openModalBtn.onclick = () => {
+        practiceModal.style.display = 'flex';
+        if(ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
+        playGuideAnimation();
+    }
+}
 
-const showGuideBtn = document.getElementById('show-guide-btn');
-if(showGuideBtn) showGuideBtn.onclick = async () => {
+// Close Modal
+if(closeModalBtn) {
+    closeModalBtn.onclick = () => {
+        practiceModal.style.display = 'none';
+    }
+}
+
+// Replay Animation
+if(modalReplayBtn) modalReplayBtn.onclick = playGuideAnimation;
+
+// Clear Canvas
+if(modalClearBtn) {
+    modalClearBtn.onclick = () => {
+        if(ctx) { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.beginPath(); }
+    }
+}
+
+async function playGuideAnimation() {
   const char = activeCharUI.textContent.trim();
-  if (char.includes('<svg') || activeCharUI.innerHTML.includes('<svg')) return; 
+  modalGuideChar.innerHTML = char;
+  modalGuideChar.classList.remove('enlarged-guide');
+
+  if (char.includes('<svg')) return;
 
   const hex = char.charCodeAt(0).toString(16).padStart(5, '0');
   try {
@@ -498,25 +583,43 @@ if(showGuideBtn) showGuideBtn.onclick = async () => {
     if (!res.ok) throw new Error("Not found");
     const svg = await res.text();
     
-    activeCharUI.innerHTML = svg.substring(svg.indexOf('<svg'));
-    activeCharUI.classList.add('enlarged-guide');
-    activeCharUI.onclick = () => { 
-        activeCharUI.classList.remove('enlarged-guide'); 
-        activeCharUI.innerHTML = char; 
-        activeCharUI.onclick = null; 
-    };
+    modalGuideChar.innerHTML = svg.substring(svg.indexOf('<svg'));
+    modalGuideChar.classList.add('enlarged-guide');
 
-    activeCharUI.querySelectorAll('path').forEach((p, i) => {
+    modalGuideChar.querySelectorAll('path').forEach((p, i) => {
       const l = p.getTotalLength(); 
       p.style.strokeDasharray = l; 
       p.style.strokeDashoffset = l;
       p.style.animation = `drawStroke 1s forwards ${i * 1.1}s`;
     });
-  } catch (e) { alert("Guide currently unavailable for this character."); }
-};
+  } catch (e) { console.log("Guide currently unavailable for this character."); }
+}
+
+// --- CANVAS DRAWING LOGIC ---
+if(canvas && ctx) {
+    ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';      
+    
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; draw(e); });
+    canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
+    canvas.addEventListener('mousemove', draw);
+    
+    // Prevent default touch behaviors (like scrolling) while drawing
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; draw(e.touches[0]); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchend', (e) => { isDrawing = false; ctx.beginPath(); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); }, {passive: false});
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+      ctx.stroke(); ctx.beginPath(); ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+    }
+}
 
 // ==========================================
-// --- 8. QUIZ MODULE ---
+// --- 7. QUIZ MODULE ---
 // ==========================================
 const startCharBtn = document.getElementById('start-char-quiz-btn');
 if(startCharBtn) startCharBtn.onclick = () => { currentQuizMode = 'char'; startQuiz(); };
@@ -568,7 +671,7 @@ function loadNextQuestion() {
 }
 
 // ==========================================
-// --- 9. READING MODULE ---
+// --- 8. READING MODULE ---
 // ==========================================
 let currentParagraphIndex = 0;
 const startReadingBtn = document.getElementById('start-reading-btn');
@@ -602,7 +705,7 @@ const readAudioBtn = document.getElementById('read-audio-btn');
 if (readAudioBtn) readAudioBtn.onclick = () => playAudio(readingDb[currentParagraphIndex].jp);
 
 // ==========================================
-// --- 10. SENTENCE BANK MODULE ---
+// --- 9. SENTENCE BANK MODULE ---
 // ==========================================
 const startSentencesBtn = document.getElementById('start-sentences-btn');
 const quitSentencesBtn = document.getElementById('quit-sentences-btn');
@@ -634,7 +737,7 @@ function renderSentences() {
 }
 
 // ==========================================
-// --- 11. THE LIBRARY MODULE ---
+// --- 10. THE LIBRARY MODULE ---
 // ==========================================
 const startLibraryBtn = document.getElementById('start-library-btn');
 const quitLibraryBtn = document.getElementById('quit-library-btn');
@@ -659,7 +762,7 @@ function renderLibrary(searchTerm) {
 }
 
 // ==========================================
-// --- 12. TYPING STUDIO MODULE ---
+// --- 11. TYPING STUDIO MODULE ---
 // ==========================================
 const startTypingBtn = document.getElementById('start-typing-btn');
 const quitTypingBtn = document.getElementById('quit-typing-btn');
@@ -699,26 +802,3 @@ document.addEventListener('keydown', (e) => {
         setTimeout(() => { if(disp) disp.style.color = "#00d2ff"; loadTypingWord(); }, 500);
     }
 });
-
-// ==========================================
-// --- 13. CANVAS DRAWING (TOUCH SAFE) ---
-// ==========================================
-if(canvas && ctx) {
-    ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';      
-    canvas.addEventListener('mousedown', (e) => { isDrawing = true; draw(e); });
-    canvas.addEventListener('mouseup', () => { isDrawing = false; ctx.beginPath(); });
-    canvas.addEventListener('mousemove', draw);
-    
-    canvas.addEventListener('touchstart', (e) => { isDrawing = true; draw(e.touches[0]); e.preventDefault(); }, {passive: false});
-    canvas.addEventListener('touchend', () => { isDrawing = false; ctx.beginPath(); });
-    canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); }, {passive: false});
-
-    function draw(e) {
-      if (!isDrawing) return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-      ctx.stroke(); ctx.beginPath(); ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-    }
-}
